@@ -25,6 +25,7 @@ class PubController extends Controller
                 'city_capacity'      => Setting::number('pub_city_capacity', 275),
                 'leasehold_cost'     => Setting::number('pub_leasehold_build_per_customer', 100),
                 'freehold_cost'      => Setting::number('pub_freehold_build_per_customer', 1000),
+                'tv_licence_cost'    => Setting::number('pub_sports_tv_licence_per_customer', 20),
             ],
         ]);
     }
@@ -32,9 +33,10 @@ class PubController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:100',
-            'category' => 'required|in:community,town,city',
-            'tenure'   => 'required|in:leasehold,freehold',
+            'name'          => 'required|string|max:100',
+            'category'      => 'required|in:community,town,city',
+            'tenure'        => 'required|in:leasehold,freehold',
+            'has_sports_tv' => 'boolean',
         ]);
 
         $user     = auth()->user();
@@ -44,7 +46,14 @@ class PubController extends Controller
             : 'pub_leasehold_build_per_customer';
         $cost     = Setting::number($costKey) * $capacity;
 
-        if ($user->balance < $cost) {
+        $tvCost = 0;
+        if ($request->boolean('has_sports_tv')) {
+            $tvCost = Setting::number('pub_sports_tv_licence_per_customer') * $capacity * 4; // 4 weeks upfront
+        }
+
+        $totalCost = $cost + $tvCost;
+
+        if ($user->balance < $totalCost) {
             return back()->with('error', 'Insufficient funds to open this pub.');
         }
 
@@ -54,11 +63,12 @@ class PubController extends Controller
             'tenure'            => $request->tenure,
             'customer_capacity' => $capacity,
             'build_cost'        => $cost,
+            'has_sports_tv'     => $request->boolean('has_sports_tv'),
         ]);
 
-        $user->decrement('balance', $cost);
+        $user->decrement('balance', $totalCost);
 
-        return back()->with('success', "'{$pub->name}' opened for £" . number_format($cost, 2));
+        return back()->with('success', "'{$pub->name}' opened for £" . number_format($totalCost, 2));
     }
 
     public function update(Request $request, Pub $pub)
@@ -67,18 +77,40 @@ class PubController extends Controller
 
         $request->validate([
             'has_sports_tv' => 'sometimes|boolean',
+            'tenure'        => 'sometimes|in:freehold', // can only upgrade to freehold
         ]);
 
-        if ($request->has('has_sports_tv') && ! $pub->has_sports_tv) {
-            $user = auth()->user();
-            $tvCost = Setting::number('pub_sports_tv_licence_per_customer') * $pub->customer_capacity * 52;
-            if ($user->balance < $tvCost) {
-                return back()->with('error', 'Insufficient funds for sports TV installation.');
-            }
-            $user->decrement('balance', $tvCost);
+        $user = auth()->user();
+        $totalCost = 0;
+        $buildCostIncrease = 0;
+
+        if ($request->has('has_sports_tv') && $request->boolean('has_sports_tv') && !$pub->has_sports_tv) {
+            // Install TV - 4 weeks upfront
+            $tvCost = Setting::number('pub_sports_tv_licence_per_customer') * $pub->customer_capacity * 4;
+            $totalCost += $tvCost;
         }
 
-        $pub->update($request->only('has_sports_tv'));
+        if ($request->has('tenure') && $request->tenure === 'freehold' && $pub->tenure === 'leasehold') {
+            $freeholdCost = Setting::number('pub_freehold_build_per_customer');
+            $leaseholdCost = Setting::number('pub_leasehold_build_per_customer');
+            $upgradeCost = ($freeholdCost - $leaseholdCost) * $pub->customer_capacity;
+            $totalCost += $upgradeCost;
+            $buildCostIncrease = $upgradeCost;
+        }
+
+        if ($totalCost > 0 && $user->balance < $totalCost) {
+            return back()->with('error', 'Insufficient funds for these upgrades.');
+        }
+
+        if ($totalCost > 0) {
+            $user->decrement('balance', $totalCost);
+        }
+
+        if ($buildCostIncrease > 0) {
+            $pub->increment('build_cost', $buildCostIncrease);
+        }
+
+        $pub->update($request->only('has_sports_tv', 'tenure'));
 
         return back()->with('success', 'Pub updated.');
     }

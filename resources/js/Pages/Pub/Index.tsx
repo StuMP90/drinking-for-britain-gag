@@ -49,6 +49,7 @@ interface Settings {
     city_capacity: number;
     leasehold_cost: number;
     freehold_cost: number;
+    tv_licence_cost: number;
 }
 
 interface Props {
@@ -63,7 +64,7 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
     const [showBuild, setShowBuild] = useState(false);
     const [expandedPub, setExpandedPub] = useState<number | null>(null);
 
-    const buildForm = useForm({ name: '', category: 'community', tenure: 'leasehold' });
+    const buildForm = useForm({ name: '', category: 'community', tenure: 'leasehold', has_sports_tv: false });
     const staffForm = useForm({ staffable_type: 'pub', staffable_id: 0, name: '', role: 'Bar Staff', weekly_wage: 400 });
     const priceForm = useForm({ stock_id: 0, retail_price: 0 });
 
@@ -76,7 +77,11 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
     const buildCost = () => {
         const cap = capacity(buildForm.data.category);
         const rate = buildForm.data.tenure === 'freehold' ? settings.freehold_cost : settings.leasehold_cost;
-        return cap * rate;
+        let cost = cap * rate;
+        if (buildForm.data.has_sports_tv) {
+            cost += settings.tv_licence_cost * cap * 4;
+        }
+        return cost;
     };
 
     return (
@@ -134,6 +139,17 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                                 <option value="leasehold">Leasehold (£{settings.leasehold_cost}/cap)</option>
                                 <option value="freehold">Freehold (£{settings.freehold_cost}/cap)</option>
                             </select>
+                        </div>
+                        <div className="flex items-center h-10">
+                            <label className="flex items-center gap-2 text-stone-200 text-sm cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="rounded border-stone-700 bg-stone-800 text-amber-500 focus:ring-amber-500"
+                                    checked={buildForm.data.has_sports_tv}
+                                    onChange={e => buildForm.setData('has_sports_tv', e.target.checked)}
+                                />
+                                Include Sports TV
+                            </label>
                         </div>
                         <div className="md:col-span-4 flex items-center justify-between">
                             <span className="text-sm text-stone-400">
@@ -363,6 +379,51 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                                             + Hire
                                         </button>
                                     </form>
+                                </div>
+
+                                {/* Upgrades section */}
+                                <div>
+                                    <h4 className="text-sm font-semibold text-stone-300 mb-3">Upgrades</h4>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center justify-between py-2 border-b border-stone-800/40">
+                                            <div>
+                                                <div className="text-stone-200 text-sm font-medium">Sports TV</div>
+                                                <div className="text-stone-500 text-xs">Boosts capacity by 50%. Cost: {fmt(settings.tv_licence_cost * pub.customer_capacity)}/wk.</div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const isInstalling = !pub.has_sports_tv;
+                                                    if (isInstalling) {
+                                                        const upfront = settings.tv_licence_cost * pub.customer_capacity * 4;
+                                                        if (!confirm(`Installing Sports TV requires a 4-week upfront payment of ${fmt(upfront)}. Continue?`)) return;
+                                                    }
+                                                    router.patch(route('pubs.update', pub.id), { has_sports_tv: isInstalling }, { preserveScroll: true });
+                                                }}
+                                                className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${pub.has_sports_tv ? 'bg-red-900/40 hover:bg-red-800/60 text-red-300' : 'bg-amber-500 hover:bg-amber-400 text-[#0d0d12] font-semibold'}`}
+                                            >
+                                                {pub.has_sports_tv ? 'Cancel Subscription' : 'Install TV'}
+                                            </button>
+                                        </div>
+                                        {pub.tenure === 'leasehold' && (
+                                            <div className="flex items-center justify-between py-2 border-b border-stone-800/40">
+                                                <div>
+                                                    <div className="text-stone-200 text-sm font-medium">Buy Freehold</div>
+                                                    <div className="text-stone-500 text-xs">Eliminates weekly lease costs.</div>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const cost = (settings.freehold_cost - settings.leasehold_cost) * pub.customer_capacity;
+                                                        if (confirm(`Buying the freehold will cost ${fmt(cost)}. Continue?`)) {
+                                                            router.patch(route('pubs.update', pub.id), { tenure: 'freehold' }, { preserveScroll: true });
+                                                        }
+                                                    }}
+                                                    className="px-4 py-1.5 rounded-lg bg-stone-200 hover:bg-white text-stone-900 font-semibold text-sm transition-colors"
+                                                >
+                                                    Buy for {fmt((settings.freehold_cost - settings.leasehold_cost) * pub.customer_capacity)}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
