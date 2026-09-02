@@ -203,6 +203,7 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                                                         <th className="text-left pb-2 pr-4">Product</th>
                                                         <th className="text-right pb-2 pr-4">Stock</th>
                                                         <th className="text-right pb-2 pr-4">Cost/L</th>
+                                                        <th className="text-right pb-2 pr-4">Cost/Serving</th>
                                                         <th className="text-right pb-2 pr-4">Servings left</th>
                                                         <th className="text-right pb-2">Retail price</th>
                                                     </tr>
@@ -224,6 +225,9 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-500">
                                                                     {fmt(s.cost_per_unit)}
+                                                                </td>
+                                                                <td className="py-2 pr-4 text-right text-stone-500">
+                                                                    {fmt(Number(s.cost_per_unit) * serv)}
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-400">
                                                                     {servings.toLocaleString('en-GB')} {label}s

@@ -101,7 +101,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'rrp_markup',                    'value' => '1.5',  'type' => 'number', 'description' => 'RRP markup on wholesale price'],
 
             // Game
-            ['key' => 'player_starting_balance',       'value' => '50000','type' => 'number', 'description' => 'Starting balance for new players'],
+            ['key' => 'player_starting_balance',       'value' => '100000','type' => 'number', 'description' => 'Starting balance for new players'],
             ['key' => 'game_start_date',               'value' => '2026-04-06', 'type' => 'string', 'description' => 'Game week start date'],
         ];
 

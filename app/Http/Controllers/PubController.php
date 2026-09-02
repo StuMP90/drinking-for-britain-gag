@@ -15,7 +15,7 @@ class PubController extends Controller
 
         return Inertia::render('Pub/Index', [
             'pubs'    => $user->pubs()
-                              ->with(['staff', 'stocks' => fn($q) => $q->with('marketListing')->orderBy('market_listing_id')])
+                              ->with(['staff', 'stocks' => fn($q) => $q->whereHas('marketListing', fn($q) => $q->where('type', 'product'))->with('marketListing')->orderBy('market_listing_id')])
                               ->orderBy('name')
                               ->get(),
             'balance' => $user->balance,

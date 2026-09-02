@@ -16,7 +16,7 @@ class AdminUserSeeder extends Seeder
                 'username'   => 'admin',
                 'email'      => null,
                 'password'   => bcrypt(env('ADMIN_PASSWORD', 'changeme123!')),
-                'balance'    => 0,
+                'balance'    => 100000,
                 'is_admin'   => true,
                 'is_paused'  => false,
                 'started_at' => null,

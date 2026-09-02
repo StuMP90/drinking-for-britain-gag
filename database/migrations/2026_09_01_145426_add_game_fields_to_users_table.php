@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('username')->unique()->after('id');
-            $table->decimal('balance', 15, 2)->default(50000.00)->after('password');
+            $table->decimal('balance', 15, 2)->default(100000.00)->after('password');
             $table->boolean('is_admin')->default(false)->after('balance');
             $table->boolean('is_paused')->default(false)->after('is_admin');
             $table->timestamp('started_at')->nullable()->after('is_paused');

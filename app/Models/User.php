@@ -60,6 +60,11 @@ class User extends Authenticatable
         return $this->hasMany(TaxPayment::class);
     }
 
+    public function liabilities(): HasMany
+    {
+        return $this->hasMany(Liability::class);
+    }
+
     public function latestTurn(): ?Turn
     {
         return $this->turns()->first();

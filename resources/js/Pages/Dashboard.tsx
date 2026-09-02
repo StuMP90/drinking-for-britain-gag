@@ -36,6 +36,7 @@ interface PubSale {
 
 interface TurnDetails {
     pubs: PubSale[];
+    paid_liabilities?: number;
 }
 
 interface Turn {
@@ -48,6 +49,8 @@ interface Turn {
     wages: number;
     taxes: number;
     profit: number;
+    depreciation: number;
+    litres_brewed: number;
     litres_sold: number;
     tax_breakdown: TaxBreakdown;
     details?: TurnDetails;
@@ -74,6 +77,13 @@ interface Brewery {
     ingredients: any[];
 }
 
+interface Liability {
+    id: number;
+    type: string;
+    amount: string;
+    due_date: string;
+}
+
 interface Props {
     balance: number;
     latestTurn: Turn | null;
@@ -82,12 +92,13 @@ interface Props {
     pendingActions: number;
     pubs: Pub[];
     breweries: Brewery[];
+    liabilities: Liability[];
 }
 
 const fmt = (n: number, decimals = 2) =>
     '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, pendingActions, pubs, breweries }: Props) {
+export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, pendingActions, pubs, breweries, liabilities = [] }: Props) {
     const { post, processing } = useForm({});
 
     const advanceTurn = () => post(route('turn.store'));
@@ -134,19 +145,45 @@ export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, 
                         <h2 className="text-lg font-semibold text-stone-200 mb-4">
                             Last Turn — w/c {latestTurn.week_commencing} ({latestTurn.financial_year})
                         </h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                            <FinRow label="Revenue" value={fmt(latestTurn.revenue)} positive />
-                            <FinRow label="COGS" value={fmt(latestTurn.cogs)} />
-                            <FinRow label="Operating Costs" value={fmt(latestTurn.costs)} />
-                            <FinRow label="Wages" value={fmt(latestTurn.wages)} />
-                            <FinRow label="Total Tax" value={fmt(latestTurn.taxes)} negative />
-                            <FinRow label="Net Profit" value={fmt(latestTurn.profit)} positive={latestTurn.profit > 0} negative={latestTurn.profit < 0} />
-                            <FinRow label="Litres Sold" value={`${Number(latestTurn.litres_sold).toFixed(1)}L`} />
+                        
+                        <div className="grid md:grid-cols-2 gap-8 mb-6">
+                            {/* P&L Section */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-stone-400 mb-3 uppercase tracking-wider">Profit & Loss (Accrual)</h3>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Revenue</span><span className="text-green-400">{fmt(latestTurn.revenue)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">COGS</span><span className="text-stone-300">-{fmt(latestTurn.cogs)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Operating Costs</span><span className="text-stone-300">-{fmt(latestTurn.costs)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Wages</span><span className="text-stone-300">-{fmt(latestTurn.wages)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Taxes (Accrued)</span><span className="text-stone-300">-{fmt(latestTurn.taxes)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Depreciation</span><span className="text-stone-300">-{fmt(latestTurn.depreciation)}</span></div>
+                                    <div className="flex justify-between text-sm font-bold border-t border-stone-800 pt-2">
+                                        <span className="text-stone-300">Net Profit</span>
+                                        <span className={latestTurn.profit >= 0 ? 'text-green-400' : 'text-red-400'}>{fmt(latestTurn.profit)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Cash Flow Section */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-stone-400 mb-3 uppercase tracking-wider">Cash Flow</h3>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Cash In (Revenue)</span><span className="text-green-400">{fmt(latestTurn.revenue)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Cash Out (Op Costs + Wages)</span><span className="text-red-400">-{fmt(Number(latestTurn.costs) + Number(latestTurn.wages))}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-stone-500">Liabilities Paid to HMRC</span><span className="text-red-400">-{fmt(latestTurn.details?.paid_liabilities ?? 0)}</span></div>
+                                    <div className="flex justify-between text-sm font-bold border-t border-stone-800 pt-2">
+                                        <span className="text-stone-300">Net Cash Change</span>
+                                        <span className={(latestTurn.revenue - latestTurn.costs - latestTurn.wages - (latestTurn.details?.paid_liabilities ?? 0)) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                            {fmt(latestTurn.revenue - latestTurn.costs - latestTurn.wages - (latestTurn.details?.paid_liabilities ?? 0))}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {latestTurn.tax_breakdown && (
                             <>
-                                <h3 className="text-sm font-semibold text-stone-400 mb-3 uppercase tracking-wider">Tax Breakdown (paid to HMRC)</h3>
+                                <h3 className="text-sm font-semibold text-stone-400 mb-3 uppercase tracking-wider">Taxes Incurred This Turn (Accrued to Liabilities)</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                                     {[
                                         { label: 'Income Tax', key: 'income_tax' },
@@ -216,6 +253,39 @@ export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, 
                         )}
                     </div>
                 )}
+                {/* Upcoming Liabilities */}
+                {liabilities.length > 0 && (
+                    <div className="rounded-2xl border border-stone-800 bg-stone-900/40 p-6">
+                        <h2 className="text-lg font-semibold text-stone-200 mb-4 flex justify-between items-center">
+                            <span>Upcoming Tax Liabilities</span>
+                            <span className="text-sm font-normal text-stone-400">Total: <span className="text-red-400 font-semibold">{fmt(liabilities.reduce((sum, l) => sum + Number(l.amount), 0))}</span></span>
+                        </h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-stone-500 text-xs uppercase tracking-wider border-b border-stone-800">
+                                        <th className="px-4 py-2 text-left">Tax Type</th>
+                                        <th className="px-4 py-2 text-right">Amount Due</th>
+                                        <th className="px-4 py-2 text-right">Due Date (w/c)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {liabilities.map(l => (
+                                        <tr key={l.id} className="border-b border-stone-800/30 hover:bg-stone-800/20 transition-colors">
+                                            <td className="px-4 py-2 text-stone-300 capitalize">{l.type.replace('_', ' ')}</td>
+                                            <td className="px-4 py-2 text-right font-medium text-red-400">{fmt(Number(l.amount))}</td>
+                                            <td className="px-4 py-2 text-right text-stone-400">{l.due_date}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="mt-3 text-xs text-stone-500 text-right">
+                            * Automatically deducted from cash on or after the due date.
+                        </div>
+                    </div>
+                )}
+
 
                 {!latestTurn && (
                     <div className="rounded-2xl border border-stone-800 bg-stone-900/30 p-10 text-center text-stone-500">

@@ -34,6 +34,10 @@ class GameController extends Controller
             'pendingActions' => $user->turnActions()->pending()->count(),
             'pubs'        => $user->pubs()->with('staff', 'stocks.marketListing')->get(),
             'breweries'   => $user->breweries()->with('staff', 'ingredients.marketListing')->get(),
+            'liabilities' => \App\Models\Liability::where('user_id', $user->id)
+                ->whereNull('paid_at')
+                ->orderBy('due_date')
+                ->get(),
         ]);
     }
 
@@ -81,11 +85,33 @@ class GameController extends Controller
                 $actionLog[] = array_merge(['type' => $action->type], $result);
             }
 
+            // 3.5 Pay due liabilities
+            $dueLiabilities = $user->liabilities()->whereNull('paid_at')->where('due_date', '<=', now())->get();
+            $liabilityPayments = 0;
+            foreach ($dueLiabilities as $liability) {
+                $liabilityPayments += $liability->amount;
+                $liability->update(['paid_at' => now()]);
+            }
+            if ($liabilityPayments > 0) {
+                $user->decrement('balance', $liabilityPayments);
+            }
+
+            $incurredAlcoholDuty = 0;
+            $purchasedAlcoholDuty = 0;
+            foreach ($actionLog as $log) {
+                if (($log['type'] === 'transfer' || $log['type'] === 'brew') && isset($log['alcohol_duty'])) {
+                    $incurredAlcoholDuty += $log['alcohol_duty'];
+                }
+                if ($log['type'] === 'purchase_product' && isset($log['purchased_alcohol_duty'])) {
+                    $purchasedAlcoholDuty += $log['purchased_alcohol_duty'];
+                }
+            }
+            $totalAlcoholDuty = $incurredAlcoholDuty + $purchasedAlcoholDuty;
+
             // 4. Pub sales
             $totalRevenue       = 0;
             $totalCogs          = 0;
             $totalVat           = 0;
-            $totalAlcoholDuty   = 0;
             $totalLitresSold    = 0;
             $pubDetails         = [];
 
@@ -94,7 +120,6 @@ class GameController extends Controller
                 $totalRevenue     += $salesResult['revenue'];
                 $totalCogs        += $salesResult['cogs'];
                 $totalVat         += $salesResult['vat'];
-                $totalAlcoholDuty += $salesResult['alcohol_duty'];
                 $totalLitresSold  += $salesResult['litres_sold'];
                 $pubDetails[]      = $salesResult;
             }
@@ -149,13 +174,16 @@ class GameController extends Controller
             // 8. Corporation tax
             $preTaxProfit = $totalRevenue - $totalCogs - $totalCosts - $totalWages
                           - $totalIncomeTax - $totalEmployeeNi - $totalEmployerNi
-                          - $totalVat - $totalAlcoholDuty;
+                          - $totalVat - $incurredAlcoholDuty;
 
             $corpTaxRate  = Setting::number('corporation_tax_rate', 0.25);
             $corpTax      = $preTaxProfit > 0 ? round($preTaxProfit * $corpTaxRate, 2) : 0;
 
             $totalTaxes = $totalIncomeTax + $totalEmployeeNi + $totalEmployerNi
                         + $totalVat + $totalAlcoholDuty + $corpTax;
+
+            $cashTaxes = $totalIncomeTax + $totalEmployeeNi + $totalEmployerNi
+                       + $totalVat + $corpTax;
 
             $netProfit = $preTaxProfit - $corpTax;
 
@@ -183,24 +211,95 @@ class GameController extends Controller
                 'details'       => ['pubs' => $pubDetails, 'actions' => $actionLog],
             ]);
 
-            // 10. Record tax payments
-            foreach ($taxBreakdown as $type => $amount) {
-                if ($type === 'total' || $amount <= 0) {
-                    continue;
-                }
-                TaxPayment::create([
-                    'user_id' => $user->id,
-                    'turn_id' => $turn->id,
-                    'type'    => $type,
-                    'amount'  => $amount,
+            // 10. Record tax liabilities (instead of paying immediately)
+            $payeDueDate = $weekCommencing->copy()->addMonth()->startOfMonth()->addDays(21); // 22nd of next month
+            
+            if ($totalIncomeTax > 0) {
+                \App\Models\Liability::create([
+                    'user_id'  => $user->id,
+                    'type'     => 'income_tax',
+                    'amount'   => $totalIncomeTax,
+                    'due_date' => $payeDueDate,
+                ]);
+            }
+            if ($totalEmployeeNi > 0) {
+                \App\Models\Liability::create([
+                    'user_id'  => $user->id,
+                    'type'     => 'employee_ni',
+                    'amount'   => $totalEmployeeNi,
+                    'due_date' => $payeDueDate,
+                ]);
+            }
+            if ($totalEmployerNi > 0) {
+                \App\Models\Liability::create([
+                    'user_id'  => $user->id,
+                    'type'     => 'employer_ni',
+                    'amount'   => $totalEmployerNi,
+                    'due_date' => $payeDueDate,
                 ]);
             }
 
-            // 11. Adjust player balance
-            $balanceChange = $totalRevenue - $totalCogs - $totalCosts - $totalWages - $totalTaxes;
+            // VAT is due end of next month after quarter ends
+            $quarterEnd = $weekCommencing->copy()->lastOfQuarter();
+            $vatDueDate = $quarterEnd->copy()->addMonth()->lastOfMonth();
+            if ($totalVat > 0) {
+                \App\Models\Liability::create([
+                    'user_id'  => $user->id,
+                    'type'     => 'vat',
+                    'amount'   => $totalVat,
+                    'due_date' => $vatDueDate,
+                ]);
+            }
+
+            // Corp Tax is due 9 months after end of April-March financial year
+            // Financial year ends March 31st of the +1 year if current month >= 4, else current year
+            $financialYearEndYear = $weekCommencing->month >= 4 ? $weekCommencing->year + 1 : $weekCommencing->year;
+            $financialYearEnd = \Carbon\Carbon::create($financialYearEndYear, 3, 31);
+            $corpTaxDueDate = $financialYearEnd->copy()->addMonths(9);
+            if ($corpTax > 0) {
+                \App\Models\Liability::create([
+                    'user_id'  => $user->id,
+                    'type'     => 'corporation_tax',
+                    'amount'   => $corpTax,
+                    'due_date' => $corpTaxDueDate,
+                ]);
+            }
+
+            // 11. Settle Due Liabilities
+            $dueLiabilities = \App\Models\Liability::where('user_id', $user->id)
+                ->whereNull('paid_at')
+                ->where('due_date', '<=', $weekCommencing)
+                ->get();
+
+            $totalPaidLiabilities = 0;
+            foreach ($dueLiabilities as $liability) {
+                $totalPaidLiabilities += $liability->amount;
+                $liability->update(['paid_at' => now()]);
+                
+                // Still log to TaxPayment for history if needed, or we rely on Liability table
+                TaxPayment::create([
+                    'user_id' => $user->id,
+                    'turn_id' => $turn->id,
+                    'type'    => $liability->type,
+                    'amount'  => $liability->amount,
+                ]);
+            }
+
+            // Record paid liabilities in the turn details for Cash Flow reporting
+            $turnDetails = $turn->details ?? [];
+            $turnDetails['paid_liabilities'] = round($totalPaidLiabilities, 2);
+            $turn->update(['details' => $turnDetails]);
+
+            // 12. Adjust player balance
+            // Operating cash flow before taxes
+            $operatingCashFlow = $totalRevenue - $totalCosts - $totalWages;
+            $balanceChange = $operatingCashFlow - $totalPaidLiabilities;
             $user->increment('balance', round($balanceChange, 2));
 
-            if (! $user->started_at) {
+            // 13. Bankruptcy Check
+            if ($user->balance < 0) {
+                $this->processBankruptcy($user);
+            } elseif (! $user->started_at) {
                 $user->update(['started_at' => now()]);
             }
         });
@@ -283,13 +382,18 @@ class GameController extends Controller
 
         $user->decrement('balance', $cost);
 
-        return ['success' => true, 'message' => "Purchased {$quantity}L of {$listing->name}", 'cost' => $cost];
+        return [
+            'success' => true,
+            'message' => "Purchased {$quantity}L of {$listing->name}",
+            'cost' => $cost,
+            'purchased_alcohol_duty' => $dutyPerLitre * $quantity
+        ];
     }
 
     private function applyTransfer(User $user, array $payload): array
     {
         $breweryStock = Stock::where('stockable_type', Brewery::class)
-            ->where('stockable_id', $payload['brewery_stock_id'] ?? 0)
+            ->where('id', $payload['brewery_stock_id'] ?? 0)
             ->whereHas('stockable', fn ($q) => $q->where('user_id', $user->id))
             ->first();
 
@@ -322,7 +426,23 @@ class GameController extends Controller
             'cost_per_unit'   => $newQty > 0 ? ($existingTotal + $addedTotal) / $newQty : 0,
         ]);
 
-        return ['success' => true, 'message' => "Transferred {$quantity}L to {$pub->name}"];
+        $abv = (float) ($breweryStock->marketListing->abv ?? 4.0);
+        $dutyPerLitre = MarketListing::alcoholDutyPerLitre($abv);
+        $totalDuty = $dutyPerLitre * $quantity;
+
+        if ($totalDuty > 0) {
+            $user->liabilities()->create([
+                'type' => 'alcohol_duty',
+                'amount' => $totalDuty,
+                'due_date' => now()->addMonthNoOverflow()->setDay(25),
+            ]);
+        }
+
+        return [
+            'success' => true,
+            'message' => "Transferred {$quantity}L to {$pub->name}",
+            'alcohol_duty' => $totalDuty
+        ];
     }
 
     private function applyBrew(User $user, array $payload): array
@@ -390,6 +510,8 @@ class GameController extends Controller
 
         $defaultRetailPrice = $listing->retail_price ?? ($listing->price * Setting::number('rrp_markup', 1.5));
 
+        $alcoholDuty = 0;
+
         if ($targetPub) {
             $pubStock = $targetPub->stocks()->firstOrCreate(
                 ['market_listing_id' => $listing->id],
@@ -402,6 +524,18 @@ class GameController extends Controller
                 'quantity_litres' => $newQty,
                 'cost_per_unit'   => $newQty > 0 ? ($existingTotal + $newTotal) / $newQty : 0,
             ]);
+
+            $abv = (float) ($listing->abv ?? 4.0);
+            $dutyPerLitre = MarketListing::alcoholDutyPerLitre($abv);
+            $alcoholDuty = $dutyPerLitre * $producedQuantity;
+            
+            if ($alcoholDuty > 0) {
+                $user->liabilities()->create([
+                    'type' => 'alcohol_duty',
+                    'amount' => $alcoholDuty,
+                    'due_date' => now()->addMonthNoOverflow()->setDay(25),
+                ]);
+            }
         } else {
             $breweryStock = $brewery->stocks()->firstOrCreate(
                 ['market_listing_id' => $listing->id],
@@ -422,6 +556,7 @@ class GameController extends Controller
             'litres_brewed'    => round($producedQuantity, 4),
             'cost'             => round($totalCost, 2),
             'satisfaction'     => $satisfaction,
+            'alcohol_duty'     => round($alcoholDuty, 2),
         ];
     }
 
@@ -472,7 +607,6 @@ class GameController extends Controller
 
         $revenue     = 0;
         $cogs        = 0;
-        $alcoholDuty = 0;
         $litresSold  = 0;
         $remaining   = $demandLitres;
         $drinks      = [];
@@ -496,14 +630,12 @@ class GameController extends Controller
             
             $itemRevenue = $sold * ((float) $stock->retail_price / max(0.001, $servingSize));
             $itemCogs    = $sold * (float) $stock->cost_per_unit;
-            $itemDuty    = MarketListing::alcoholDutyPerLitre($abv) * $sold;
             $itemVat     = $itemRevenue * $vatRate;
-            $itemProfit  = $itemRevenue - $itemCogs - $itemDuty - $itemVat;
+            $itemProfit  = $itemRevenue - $itemCogs - $itemVat;
 
             $revenue    += $itemRevenue;
             $cogs       += $itemCogs;
             $litresSold += $sold;
-            $alcoholDuty += $itemDuty;
 
             $name = $stock->marketListing->name;
             if (!isset($drinks[$name])) {
@@ -546,9 +678,8 @@ class GameController extends Controller
             'revenue'           => round($revenue, 2),
             'cogs'              => round($cogs, 2),
             'vat'               => round($vat, 2),
-            'alcohol_duty' => round($alcoholDuty, 2),
-            'litres_sold'  => round($litresSold, 4),
-            'drinks'       => array_values($drinks),
+            'litres_sold'       => round($litresSold, 4),
+            'drinks'            => array_values($drinks),
         ];
     }
 
@@ -675,5 +806,24 @@ class GameController extends Controller
         $year = $date->month >= 4 ? $date->year : $date->year - 1;
 
         return "{$year}–" . ($year + 1);
+    }
+
+    private function processBankruptcy(User $user): void
+    {
+        // 1. Wipe all game state for this user
+        $user->pubs()->delete();
+        $user->breweries()->delete();
+        \App\Models\Liability::where('user_id', $user->id)->delete();
+        \App\Models\Turn::where('user_id', $user->id)->delete();
+        \App\Models\TaxPayment::where('user_id', $user->id)->delete();
+        \App\Models\TurnAction::where('user_id', $user->id)->delete();
+
+        // 2. Reset balance
+        $user->update([
+            'balance' => 100000,
+            'started_at' => null, // Allows them to start fresh
+        ]);
+        
+        session()->flash('warning', 'You went bankrupt! Your business has been liquidated, and you are starting fresh with £100,000.');
     }
 }

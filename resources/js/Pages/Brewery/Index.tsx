@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { useState } from 'react';
 
@@ -236,13 +236,45 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                                 <div>
                                     <h4 className="text-sm font-semibold text-stone-300 mb-2">Staff</h4>
                                     {brewery.staff.map(s => (
-                                        <div key={s.id} className="flex items-center gap-4 text-sm py-1">
+                                        <div key={s.id} className="flex items-center gap-4 text-sm py-1 border-b border-stone-800/40 last:border-0 pb-2">
                                             <span className="text-stone-300 w-32 shrink-0">{s.name}</span>
-                                            <span className="text-stone-500">{s.role}</span>
-                                            <span className="text-stone-400">{fmt(s.weekly_wage)}/wk</span>
+                                            <span className="text-stone-500 w-24">{s.role}</span>
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-stone-500 text-xs">£</span>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="1"
+                                                    defaultValue={Number(s.weekly_wage).toFixed(2)}
+                                                    className="w-20 px-2 py-1 rounded bg-stone-800 border border-stone-700 text-stone-100 text-sm text-right focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                    onBlur={e => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (!isNaN(val)) {
+                                                            e.target.value = val.toFixed(2);
+                                                            if (val !== Number(s.weekly_wage)) {
+                                                                router.patch(route('staff.update', s.id), { weekly_wage: val }, { preserveScroll: true, preserveState: true });
+                                                            }
+                                                        }
+                                                    }}
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter') e.currentTarget.blur();
+                                                    }}
+                                                />
+                                                <span className="text-stone-500 text-xs">/wk</span>
+                                            </div>
                                             <span className="text-stone-500 text-xs ml-auto">
                                                 Satisfaction: {Number(s.satisfaction).toFixed(0)}%
                                             </span>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Are you sure you want to fire ${s.name}?`)) {
+                                                        router.delete(route('staff.destroy', s.id), { preserveScroll: true, preserveState: true });
+                                                    }
+                                                }}
+                                                className="ml-2 px-2 py-1 bg-red-900/40 hover:bg-red-800/60 text-red-300 rounded text-xs transition-colors"
+                                            >
+                                                Fire
+                                            </button>
                                         </div>
                                     ))}
                                     <form
