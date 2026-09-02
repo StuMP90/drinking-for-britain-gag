@@ -103,6 +103,18 @@ export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, 
 
     const advanceTurn = () => post(route('turn.store'));
 
+    const groupedLiabilities = Object.values(
+        liabilities.reduce((acc, l) => {
+            const key = `${l.type}-${l.due_date}`;
+            if (!acc[key]) {
+                acc[key] = { ...l, amount: String(l.amount) };
+            } else {
+                acc[key].amount = String(Number(acc[key].amount) + Number(l.amount));
+            }
+            return acc;
+        }, {} as Record<string, Liability>)
+    );
+
     return (
         <AppLayout>
             <Head title="Dashboard — Drinking for Britain" />
@@ -270,8 +282,8 @@ export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, 
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {liabilities.map(l => (
-                                        <tr key={l.id} className="border-b border-stone-800/30 hover:bg-stone-800/20 transition-colors">
+                                    {groupedLiabilities.map(l => (
+                                        <tr key={`${l.type}-${l.due_date}`} className="border-b border-stone-800/30 hover:bg-stone-800/20 transition-colors">
                                             <td className="px-4 py-2 text-stone-300 capitalize">{l.type.replace('_', ' ')}</td>
                                             <td className="px-4 py-2 text-right font-medium text-red-400">{fmt(Number(l.amount))}</td>
                                             <td className="px-4 py-2 text-right text-stone-400">{l.due_date}</td>
