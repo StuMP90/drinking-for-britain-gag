@@ -80,4 +80,19 @@ class User extends Authenticatable
 
         return \Carbon\Carbon::parse('2026-04-06');
     }
+
+    public function resetGame(): void
+    {
+        $this->pubs()->delete();
+        $this->breweries()->delete();
+        $this->liabilities()->delete();
+        $this->turns()->delete();
+        $this->taxPayments()->delete();
+        $this->turnActions()->delete();
+
+        $this->update([
+            'balance' => 100000,
+            'started_at' => null,
+        ]);
+    }
 }

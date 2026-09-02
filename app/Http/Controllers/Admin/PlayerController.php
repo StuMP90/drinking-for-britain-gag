@@ -39,7 +39,7 @@ class PlayerController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        $startingBalance = Setting::number('player_starting_balance', 50000);
+        $startingBalance = Setting::number('player_starting_balance', 100000);
 
         User::create([
             'name'     => $request->name,
@@ -58,6 +58,13 @@ class PlayerController extends Controller
         $status = $player->is_paused ? 'paused' : 'resumed';
 
         return back()->with('success', "Player {$player->username} {$status}.");
+    }
+
+    public function reset(User $player)
+    {
+        $player->resetGame();
+        
+        return back()->with('success', "Player {$player->username} has been reset to starting state.");
     }
 
     public function destroy(User $player)

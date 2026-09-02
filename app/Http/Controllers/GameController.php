@@ -810,19 +810,7 @@ class GameController extends Controller
 
     private function processBankruptcy(User $user): void
     {
-        // 1. Wipe all game state for this user
-        $user->pubs()->delete();
-        $user->breweries()->delete();
-        \App\Models\Liability::where('user_id', $user->id)->delete();
-        \App\Models\Turn::where('user_id', $user->id)->delete();
-        \App\Models\TaxPayment::where('user_id', $user->id)->delete();
-        \App\Models\TurnAction::where('user_id', $user->id)->delete();
-
-        // 2. Reset balance
-        $user->update([
-            'balance' => 100000,
-            'started_at' => null, // Allows them to start fresh
-        ]);
+        $user->resetGame();
         
         session()->flash('warning', 'You went bankrupt! Your business has been liquidated, and you are starting fresh with £100,000.');
     }

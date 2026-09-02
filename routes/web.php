@@ -19,12 +19,14 @@ Route::get('/', function () {
     $totalPlayers     = User::where('is_admin', false)->count();
     $cumulativeRevenue = Turn::sum('revenue');
     $cumulativeTax    = TaxPayment::sum('amount');
+    $outstandingTax   = \App\Models\Liability::whereNull('paid_at')->sum('amount');
 
     return Inertia::render('Welcome', [
         'stats' => [
             'total_players'      => $totalPlayers,
             'cumulative_revenue' => round($cumulativeRevenue, 2),
             'total_tax_paid'     => round($cumulativeTax, 2),
+            'outstanding_tax'    => round($outstandingTax, 2),
         ],
     ]);
 })->name('home');
@@ -72,6 +74,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/players', [Admin\PlayerController::class, 'index'])->name('players.index');
     Route::post('/players', [Admin\PlayerController::class, 'store'])->name('players.store');
     Route::get('/players/{player}', [Admin\PlayerController::class, 'show'])->name('players.show');
+    Route::post('/players/{player}/reset', [Admin\PlayerController::class, 'reset'])->name('players.reset');
     Route::post('/players/{player}/toggle-pause', [Admin\PlayerController::class, 'togglePause'])->name('players.toggle-pause');
     Route::delete('/players/{player}', [Admin\PlayerController::class, 'destroy'])->name('players.destroy');
 
