@@ -49,6 +49,14 @@ class MarketListing extends BaseModel
                 // so players set and see prices in familiar pub terms.
                 $listing->retail_price = round((float) $listing->price * $rrpMarkup * $servingSize, 4);
             }
+
+            // Cap values to prevent PostgreSQL numeric field overflows
+            $listing->supply       = min((float) $listing->supply, 9999999999.99);
+            $listing->demand       = min((float) $listing->demand, 9999999999.99);
+            $listing->base_supply  = min((float) $listing->base_supply, 9999999999.99);
+            $listing->price        = min((float) $listing->price, 99999999.9999);
+            $listing->retail_price = min((float) $listing->retail_price, 99999999.9999);
+            $listing->base_price   = min((float) $listing->base_price, 99999999.9999);
         });
     }
 

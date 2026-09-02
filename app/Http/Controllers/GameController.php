@@ -228,9 +228,9 @@ class GameController extends Controller
                 ]);
             }
 
-            // VAT is due end of next month after quarter ends
+            // VAT is due 1 calendar month and 7 days after quarter ends
             $quarterEnd = $weekCommencing->copy()->lastOfQuarter();
-            $vatDueDate = $quarterEnd->copy()->addMonth()->lastOfMonth();
+            $vatDueDate = $quarterEnd->copy()->addMonthNoOverflow()->addDays(7);
             if ($totalVat > 0) {
                 \App\Models\Liability::create([
                     'user_id'  => $user->id,
@@ -240,11 +240,11 @@ class GameController extends Controller
                 ]);
             }
 
-            // Corp Tax is due 9 months after end of April-March financial year
+            // Corp Tax is due 9 months and 1 day after end of April-March financial year
             // Financial year ends March 31st of the +1 year if current month >= 4, else current year
             $financialYearEndYear = $weekCommencing->month >= 4 ? $weekCommencing->year + 1 : $weekCommencing->year;
             $financialYearEnd = \Carbon\Carbon::create($financialYearEndYear, 3, 31);
-            $corpTaxDueDate = $financialYearEnd->copy()->addMonths(9);
+            $corpTaxDueDate = $financialYearEnd->copy()->addMonthsNoOverflow(9)->addDay();
             if ($corpTax > 0) {
                 \App\Models\Liability::create([
                     'user_id'  => $user->id,
@@ -423,7 +423,7 @@ class GameController extends Controller
             $user->liabilities()->create([
                 'type' => 'alcohol_duty',
                 'amount' => $totalDuty,
-                'due_date' => now()->addMonthNoOverflow()->setDay(25),
+                'due_date' => $user->nextWeekCommencing()->addMonthNoOverflow()->setDay(25),
             ]);
         }
 
@@ -522,7 +522,7 @@ class GameController extends Controller
                 $user->liabilities()->create([
                     'type' => 'alcohol_duty',
                     'amount' => $alcoholDuty,
-                    'due_date' => now()->addMonthNoOverflow()->setDay(25),
+                    'due_date' => $user->nextWeekCommencing()->addMonthNoOverflow()->setDay(25),
                 ]);
             }
         } else {
