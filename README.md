@@ -4,7 +4,7 @@ A web-based pub and brewery management simulation game where players buy pubs, b
 
 ## Overview
 
-Players take on the role of a hospitality entrepreneur. The goal is to build an empire of pubs and breweries, managing finances turn-by-turn (weekly).
+Players take on the role of a hospitality entrepreneur. The goal is to build an empire of pubs and breweries, managing finances turn-by-turn (weekly). Beyond simply running a successful business, a core purpose of the game is to demonstrate the heavy financial burden placed on the UK hospitality industry, highlighting exactly how much pubs contribute to the economy through various taxes and duties.
 
 ### Key Features
 
@@ -23,8 +23,17 @@ Players take on the role of a hospitality entrepreneur. The goal is to build an 
 *   **Turn-Based Engine:**
     *   Progress is calculated weekly via a turn processor.
     *   Revenue and demand are dynamically calculated based on price competitiveness, pub location, staff capacity, and amenities.
+*   **Realistic Financial Reporting & Taxation:**
+    *   Generates detailed Profit & Loss (P&L) statements for each turn.
+    *   Accurate tracking of liabilities including Income Tax, National Insurance (Employee & Employer), VAT, Alcohol Duty, and Corporation Tax.
+    *   Taxes and duties are accrued and paid on true-to-life payment dates (e.g., VAT quarterly, Corporation Tax annually).
 *   **Administration:**
-    *   Admin dashboard for managing players (pause/delete) and global game settings (capacities, costs, market fluctuations).
+    *   Admin dashboard for managing players (pause/delete/reset), viewing player P&L histories, and managing global game settings (capacities, costs, market fluctuations).
+
+### Recent Additions
+*   **Pub Upgrades:** Players can now upgrade existing pubs with Sports TV (incurring a 4-week upfront installation cost) or convert them from Leasehold to Freehold (dynamically affecting the pub's asset value and straight-line depreciation).
+*   **Dashboard Improvements:** Upcoming tax liabilities are now cleanly grouped and summarized by type and due date.
+*   **Admin Settings:** The global game settings UI is now fully functional, allowing real-time edits to properties like starting cash balances and game constants.
 
 ## Tech Stack
 
