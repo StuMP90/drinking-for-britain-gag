@@ -85,17 +85,6 @@ class GameController extends Controller
                 $actionLog[] = array_merge(['type' => $action->type], $result);
             }
 
-            // 3.5 Pay due liabilities
-            $dueLiabilities = $user->liabilities()->whereNull('paid_at')->where('due_date', '<=', now())->get();
-            $liabilityPayments = 0;
-            foreach ($dueLiabilities as $liability) {
-                $liabilityPayments += $liability->amount;
-                $liability->update(['paid_at' => now()]);
-            }
-            if ($liabilityPayments > 0) {
-                $user->decrement('balance', $liabilityPayments);
-            }
-
             $incurredAlcoholDuty = 0;
             $purchasedAlcoholDuty = 0;
             foreach ($actionLog as $log) {
@@ -764,7 +753,7 @@ class GameController extends Controller
         $minSupply  = Setting::number('market_minimum_supply', 500);
 
         foreach (MarketListing::active()->get() as $listing) {
-            $baseSupply   = (float) $listing->supply;
+            $baseSupply   = (float) $listing->base_supply;
             $targetSupply = max(
                 $minSupply,
                 $baseSupply * (1 + $perPlayer * $playerCount + $perBrewery * $breweryCount + $perPub * $pubCount)

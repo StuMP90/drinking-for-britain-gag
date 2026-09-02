@@ -9,7 +9,7 @@ class MarketListing extends BaseModel
 {
     protected $fillable = [
         'name', 'type', 'abv', 'base_price', 'price',
-        'retail_price', 'supply', 'demand', 'recipe', 'is_active',
+        'retail_price', 'base_supply', 'supply', 'demand', 'recipe', 'is_active',
     ];
 
     protected function casts(): array
@@ -19,6 +19,7 @@ class MarketListing extends BaseModel
             'base_price'   => 'decimal:4',
             'price'        => 'decimal:4',
             'retail_price' => 'decimal:4',
+            'base_supply'  => 'decimal:2',
             'supply'       => 'decimal:2',
             'demand'       => 'decimal:2',
             'recipe'       => 'array',

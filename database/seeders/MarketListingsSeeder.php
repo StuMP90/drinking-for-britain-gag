@@ -33,11 +33,12 @@ class MarketListingsSeeder extends Seeder
             MarketListing::updateOrCreate(
                 ['name' => $data['name'], 'type' => 'ingredient'],
                 array_merge($data, [
-                    'type'       => 'ingredient',
-                    'abv'        => 0,
-                    'price'      => $data['base_price'],
-                    'recipe'     => null,
-                    'is_active'  => true,
+                    'type'        => 'ingredient',
+                    'abv'         => 0,
+                    'price'       => $data['base_price'],
+                    'base_supply' => $data['supply'],
+                    'recipe'      => null,
+                    'is_active'   => true,
                 ])
             );
         }
@@ -142,10 +143,11 @@ class MarketListingsSeeder extends Seeder
             MarketListing::updateOrCreate(
                 ['name' => $data['name'], 'type' => 'product'],
                 array_merge($data, [
-                    'type'      => 'product',
-                    'price'     => $data['base_price'],
-                    'recipe'    => $recipe,
-                    'is_active' => true,
+                    'type'        => 'product',
+                    'price'       => $data['base_price'],
+                    'base_supply' => $data['supply'],
+                    'recipe'      => $recipe,
+                    'is_active'   => true,
                 ])
             );
         }

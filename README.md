@@ -2,6 +2,17 @@
 
 A web-based pub and brewery management simulation game where players buy pubs, brew beer, manage staff, and set prices to dominate the UK hospitality market.
 
+## Screenshots
+
+![Homepage](screenshots/Homepage.png)
+![Results Dashboard](screenshots/Results-Dashboard.png)
+![Pub Details](screenshots/Pub-Details.png)
+![Market](screenshots/Market.png)
+![Brewing](screenshots/Brewing.png)
+![Admin Dashboard](screenshots/Admin-Dashboard.png)
+![Admin Players](screenshots/Admin-Players.png)
+![Admin Player Results](screenshots/Admin-Player-Results.png)
+
 ## Overview
 
 Players take on the role of a hospitality entrepreneur. The goal is to build an empire of pubs and breweries, managing finances turn-by-turn (weekly). Beyond simply running a successful business, a core purpose of the game is to demonstrate the heavy financial burden placed on the UK hospitality industry, highlighting exactly how much pubs contribute to the economy through various taxes and duties.
