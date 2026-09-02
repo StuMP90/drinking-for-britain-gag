@@ -336,6 +336,11 @@ class GameController extends Controller
             return ['success' => false, 'message' => 'Invalid brew payload'];
         }
 
+        $requiredRole = MarketListing::requiredStaffRole((float) $listing->abv);
+        if (! $brewery->staff()->where('role', $requiredRole)->exists()) {
+            return ['success' => false, 'message' => "Brewery lacks required {$requiredRole} staff to brew {$listing->name}"];
+        }
+
         $recipe = $listing->recipe ?? Setting::json('brewery_ingredient_rates');
         if (empty($recipe)) {
             return ['success' => false, 'message' => 'No recipe found for this product'];
@@ -439,6 +444,7 @@ class GameController extends Controller
 
         if ($staff->count() < $minStaff) {
             return ['pub_id' => $pub->id, 'pub_name' => $pub->name,
+                    'capacity_servings' => round($customerDemand), 'sales_servings' => 0,
                     'revenue' => 0, 'cogs' => 0, 'vat' => 0,
                     'alcohol_duty' => 0, 'litres_sold' => 0,
                     'note' => 'Understaffed — no sales'];
@@ -469,6 +475,7 @@ class GameController extends Controller
         $alcoholDuty = 0;
         $litresSold  = 0;
         $remaining   = $demandLitres;
+        $drinks      = [];
 
         foreach ($stocks as $stock) {
             if ($remaining <= 0) {
@@ -486,27 +493,62 @@ class GameController extends Controller
             // retail_price is per-serving; convert to per-litre for revenue
             $abv         = (float) ($stock->marketListing->abv ?? 4.0);
             $servingSize = \App\Models\MarketListing::servingSizeLitres($abv);
-            $revenue    += $sold * ((float) $stock->retail_price / max(0.001, $servingSize));
-            $cogs       += $sold * (float) $stock->cost_per_unit;
-            $litresSold += $sold;
+            
+            $itemRevenue = $sold * ((float) $stock->retail_price / max(0.001, $servingSize));
+            $itemCogs    = $sold * (float) $stock->cost_per_unit;
+            $itemDuty    = MarketListing::alcoholDutyPerLitre($abv) * $sold;
+            $itemVat     = $itemRevenue * $vatRate;
+            $itemProfit  = $itemRevenue - $itemCogs - $itemDuty - $itemVat;
 
-            $abv      = (float) ($stock->marketListing->abv ?? 0);
-            $alcoholDuty += MarketListing::alcoholDutyPerLitre($abv) * $sold;
+            $revenue    += $itemRevenue;
+            $cogs       += $itemCogs;
+            $litresSold += $sold;
+            $alcoholDuty += $itemDuty;
+
+            $name = $stock->marketListing->name;
+            if (!isset($drinks[$name])) {
+                $drinks[$name] = [
+                    'name'              => $name,
+                    'quantity_litres'   => 0,
+                    'quantity_servings' => 0,
+                    'cost'              => 0,
+                    'retail_price'      => (float) $stock->retail_price,
+                    'profit'            => 0,
+                ];
+            }
+            $soldServings = $sold / max(0.001, $servingSize);
+            $drinks[$name]['quantity_litres']   += $sold;
+            $drinks[$name]['quantity_servings'] += $soldServings;
+            $drinks[$name]['cost']              += $itemCogs;
+            $drinks[$name]['profit']            += $itemProfit;
 
             $stock->decrement('quantity_litres', $sold);
             $remaining -= $sold;
         }
 
+        $salesServings = 0;
+        // Calculate margin per serving
+        foreach ($drinks as &$drink) {
+            $drink['margin_per_serving'] = $drink['quantity_servings'] > 0 
+                ? $drink['profit'] / $drink['quantity_servings'] 
+                : 0;
+            $salesServings += $drink['quantity_servings'];
+        }
+        unset($drink);
+
         $vat = $revenue * $vatRate;
 
         return [
-            'pub_id'       => $pub->id,
-            'pub_name'     => $pub->name,
-            'revenue'      => round($revenue, 2),
-            'cogs'         => round($cogs, 2),
-            'vat'          => round($vat, 2),
+            'pub_id'            => $pub->id,
+            'pub_name'          => $pub->name,
+            'capacity_servings' => round($demandDrinks),
+            'sales_servings'    => round($salesServings),
+            'revenue'           => round($revenue, 2),
+            'cogs'              => round($cogs, 2),
+            'vat'               => round($vat, 2),
             'alcohol_duty' => round($alcoholDuty, 2),
             'litres_sold'  => round($litresSold, 4),
+            'drinks'       => array_values($drinks),
         ];
     }
 

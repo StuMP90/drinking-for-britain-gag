@@ -20,6 +20,13 @@ class MarketListingsSeeder extends Seeder
             ['name' => 'Ale Yeast',       'base_price' => 4.00,  'supply' => 2000, 'demand' => 2000],
             ['name' => 'Lager Yeast',     'base_price' => 5.00,  'supply' => 1500, 'demand' => 1500],
             ['name' => 'Cider Apples',    'base_price' => 0.60,  'supply' => 4000, 'demand' => 4000],
+            ['name' => 'Red Grapes',      'base_price' => 1.50,  'supply' => 3000, 'demand' => 3000],
+            ['name' => 'White Grapes',    'base_price' => 1.40,  'supply' => 3000, 'demand' => 3000],
+            ['name' => 'Wine Yeast',      'base_price' => 6.00,  'supply' => 1500, 'demand' => 1500],
+            ['name' => 'Distilling Malt', 'base_price' => 0.90,  'supply' => 2000, 'demand' => 2000],
+            ['name' => 'Distiller\'s Yeast','base_price'=> 7.00, 'supply' => 1500, 'demand' => 1500],
+            ['name' => 'Sugar Syrup',     'base_price' => 0.40,  'supply' => 4000, 'demand' => 4000],
+            ['name' => 'Carbonated Water','base_price' => 0.20,  'supply' => 4000, 'demand' => 4000],
         ];
 
         foreach ($ingredients as $data) {
@@ -45,6 +52,22 @@ class MarketListingsSeeder extends Seeder
                 'supply'     => 2000,
                 'demand'     => 2000,
                 'recipe'     => ['Pale Malt' => 0.18, 'Bitter Hops' => 0.04, 'Ale Yeast' => 0.008],
+            ],
+            [
+                'name'       => 'House Lager',
+                'abv'        => 3.4,
+                'base_price' => 2.50,
+                'supply'     => 1200,
+                'demand'     => 1200,
+                'recipe'     => ['Wheat Malt' => 0.35, 'Aromatic Hops' => 0.04, 'Lager Yeast' => 0.01],
+            ],
+            [
+                'name'       => 'House Cider',
+                'abv'        => 3.4,
+                'base_price' => 2.50,
+                'supply'     => 1200,
+                'demand'     => 1200,
+                'recipe'     => ['Cider Apples' => 0.70, 'Ale Yeast' => 0.01],
             ],
             [
                 'name'       => 'Best Bitter',
@@ -84,7 +107,7 @@ class MarketListingsSeeder extends Seeder
                 'base_price' => 3.50,
                 'supply'     => 1000,
                 'demand'     => 1000,
-                'recipe'     => null, // market only — not brewable
+                'recipe'     => ['Red Grapes' => 1.20, 'Wine Yeast' => 0.01],
             ],
             [
                 'name'       => 'House Wine (White)',
@@ -92,7 +115,7 @@ class MarketListingsSeeder extends Seeder
                 'base_price' => 3.50,
                 'supply'     => 1000,
                 'demand'     => 1000,
-                'recipe'     => null,
+                'recipe'     => ['White Grapes' => 1.20, 'Wine Yeast' => 0.01],
             ],
             [
                 'name'       => 'House Spirits',
@@ -100,7 +123,7 @@ class MarketListingsSeeder extends Seeder
                 'base_price' => 8.00,
                 'supply'     => 800,
                 'demand'     => 800,
-                'recipe'     => null,
+                'recipe'     => ['Distilling Malt' => 0.50, 'Distiller\'s Yeast' => 0.02],
             ],
             [
                 'name'       => 'Soft Drinks',
@@ -108,7 +131,7 @@ class MarketListingsSeeder extends Seeder
                 'base_price' => 0.80,
                 'supply'     => 3000,
                 'demand'     => 3000,
-                'recipe'     => null,
+                'recipe'     => ['Sugar Syrup' => 0.10, 'Carbonated Water' => 0.90],
             ],
         ];
 

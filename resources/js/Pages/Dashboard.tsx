@@ -11,6 +11,33 @@ interface TaxBreakdown {
     total: number;
 }
 
+interface DrinkSale {
+    name: string;
+    quantity_litres: number;
+    quantity_servings: number;
+    cost: number;
+    retail_price: number;
+    profit: number;
+    margin_per_serving: number;
+}
+
+interface PubSale {
+    pub_id: number;
+    pub_name: string;
+    capacity_servings: number;
+    sales_servings: number;
+    revenue: number;
+    cogs: number;
+    vat: number;
+    alcohol_duty: number;
+    litres_sold: number;
+    drinks?: DrinkSale[];
+}
+
+interface TurnDetails {
+    pubs: PubSale[];
+}
+
 interface Turn {
     id: number;
     week_commencing: string;
@@ -23,6 +50,7 @@ interface Turn {
     profit: number;
     litres_sold: number;
     tax_breakdown: TaxBreakdown;
+    details?: TurnDetails;
 }
 
 interface Pub {
@@ -137,6 +165,54 @@ export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, 
                                     ))}
                                 </div>
                             </>
+                        )}
+
+                        {latestTurn.details?.pubs && latestTurn.details.pubs.length > 0 && (
+                            <div className="mt-6">
+                                <h3 className="text-sm font-semibold text-stone-400 mb-3 uppercase tracking-wider">Drinks Sold Breakdown</h3>
+                                {latestTurn.details.pubs.map(pub => (
+                                    pub.drinks && pub.drinks.length > 0 && (
+                                        <div key={pub.pub_id} className="mb-4 last:mb-0 rounded-xl bg-stone-800/30 border border-stone-800 overflow-hidden">
+                                            <div className="px-4 py-2 bg-stone-800/50 border-b border-stone-800/50 flex justify-between items-center">
+                                                <h4 className="font-medium text-stone-300">{pub.pub_name}</h4>
+                                                <span className="text-xs text-stone-400">
+                                                    (Capacity: {pub.capacity_servings ?? 0}, Sales: {pub.sales_servings ?? 0})
+                                                </span>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="text-stone-500 text-xs uppercase tracking-wider border-b border-stone-800">
+                                                            <th className="px-4 py-2 text-left">Drink</th>
+                                                            <th className="px-4 py-2 text-right">Quantity (Servings)</th>
+                                                            <th className="px-4 py-2 text-right">Cost</th>
+                                                            <th className="px-4 py-2 text-right">Retail Price</th>
+                                                            <th className="px-4 py-2 text-right">Profit/Loss</th>
+                                                            <th className="px-4 py-2 text-right">Margin/Serving</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {pub.drinks.map((drink, idx) => (
+                                                            <tr key={idx} className="border-b border-stone-800/30 hover:bg-stone-800/20 transition-colors">
+                                                                <td className="px-4 py-2 text-stone-300">{drink.name}</td>
+                                                                <td className="px-4 py-2 text-right text-stone-400">{Math.round(drink.quantity_servings)}</td>
+                                                                <td className="px-4 py-2 text-right text-stone-400">{fmt(drink.cost)}</td>
+                                                                <td className="px-4 py-2 text-right text-stone-400">{fmt(drink.retail_price)}</td>
+                                                                <td className={`px-4 py-2 text-right font-medium ${drink.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                                    {fmt(drink.profit)}
+                                                                </td>
+                                                                <td className={`px-4 py-2 text-right font-medium ${(drink.margin_per_serving ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                                    {fmt(drink.margin_per_serving ?? 0)}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}

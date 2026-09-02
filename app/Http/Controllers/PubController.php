@@ -14,7 +14,10 @@ class PubController extends Controller
         $user = auth()->user();
 
         return Inertia::render('Pub/Index', [
-            'pubs'    => $user->pubs()->with('staff', 'stocks.marketListing')->get(),
+            'pubs'    => $user->pubs()
+                              ->with(['staff', 'stocks' => fn($q) => $q->with('marketListing')->orderBy('market_listing_id')])
+                              ->orderBy('name')
+                              ->get(),
             'balance' => $user->balance,
             'settings' => [
                 'community_capacity' => Setting::number('pub_community_capacity', 70),

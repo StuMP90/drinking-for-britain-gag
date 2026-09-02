@@ -24,4 +24,15 @@ class Staff extends BaseModel
     {
         return $this->morphTo();
     }
+
+    public function recalculateSatisfaction(): void
+    {
+        $pubStaffWage     = \App\Models\Setting::number('staff_default_wage', 400);
+        $breweryStaffWage = \App\Models\Setting::number('brewery_staff_default_wage', 800);
+
+        $defaultWage = ($this->staffable_type === \App\Models\Pub::class) ? $pubStaffWage : $breweryStaffWage;
+
+        $satisfaction = min(100, 50 * ((float) $this->weekly_wage / $defaultWage));
+        $this->update(['satisfaction' => $satisfaction]);
+    }
 }

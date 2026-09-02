@@ -18,7 +18,7 @@ class BreweryController extends Controller
         return Inertia::render('Brewery/Index', [
             'breweries'      => $user->breweries()->with('staff', 'ingredients.marketListing', 'stocks.marketListing')->get(),
             'pubs'           => $user->pubs()->get(['id', 'name']),
-            'products'       => MarketListing::active()->products()->whereNotNull('recipe')->get(),
+            'products'       => MarketListing::active()->products()->whereNotNull('recipe')->get()->append('required_role'),
             'balance'        => $user->balance,
             'buildCostTiers' => Setting::json('brewery_build_cost_tiers'),
         ]);
@@ -68,6 +68,13 @@ class BreweryController extends Controller
             'quantity_litres'   => 'required|numeric|min:1',
             'pub_id'            => 'nullable|exists:pubs,id',
         ]);
+
+        $listing = MarketListing::findOrFail($request->market_listing_id);
+        $requiredRole = MarketListing::requiredStaffRole((float) $listing->abv);
+        
+        if (! $brewery->staff()->where('role', $requiredRole)->exists()) {
+            return back()->with('error', "You need a {$requiredRole} to brew {$listing->name}.");
+        }
 
         TurnAction::create([
             'user_id' => auth()->id(),

@@ -61,6 +61,21 @@ class MarketListing extends BaseModel
      *   wine  (≤ 22% ABV) → 175 ml   = 0.175 L
      *   spirit (> 22% ABV) → 25 ml   = 0.025 L
      */
+    /**
+     * Required brewery staff role based on ABV.
+     */
+    public static function requiredStaffRole(float $abv): string
+    {
+        if ($abv > 22.0) return 'Distiller';
+        if ($abv > 8.0)  return 'Vintner';
+        return 'Brewer';
+    }
+
+    public function getRequiredRoleAttribute(): string
+    {
+        return self::requiredStaffRole((float) $this->abv);
+    }
+
     public static function servingSizeLitres(float $abv): float
     {
         if ($abv > 22.0) return 0.025;

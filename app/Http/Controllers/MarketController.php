@@ -15,8 +15,8 @@ class MarketController extends Controller
         $user = auth()->user();
 
         return Inertia::render('Market/Index', [
-            'products' => MarketListing::active()->products()->get(),
-            'pubs'     => $user->pubs()->get(['id', 'name']),
+            'products' => MarketListing::active()->products()->orderBy('name')->get(),
+            'pubs'     => $user->pubs()->orderBy('name')->get(['id', 'name']),
             'balance'  => $user->balance,
         ]);
     }

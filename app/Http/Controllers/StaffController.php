@@ -28,6 +28,7 @@ class StaffController extends Controller
             'weekly_wage' => $request->weekly_wage,
             'satisfaction'=> 50,
         ]);
+        $staff->recalculateSatisfaction();
 
         return back()->with('success', "{$staff->name} hired.");
     }
@@ -37,6 +38,7 @@ class StaffController extends Controller
         $request->validate(['weekly_wage' => 'required|numeric|min:1']);
 
         $staff->update(['weekly_wage' => $request->weekly_wage]);
+        $staff->recalculateSatisfaction();
 
         return back()->with('success', 'Wage updated.');
     }

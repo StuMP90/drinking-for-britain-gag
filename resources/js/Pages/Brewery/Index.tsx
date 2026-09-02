@@ -6,7 +6,7 @@ interface CostTier { max_litres: number | null; cost_per_litre: number; }
 interface Staff { id: number; name: string; role: string; weekly_wage: number; satisfaction: number; }
 interface Ingredient { id: number; market_listing_id: number; quantity_kg: number; cost_per_unit: number; market_listing: { name: string }; }
 interface Stock { id: number; quantity_litres: number; market_listing: { name: string }; }
-interface Product { id: number; name: string; abv: number; recipe: Record<string, number> | null; }
+interface Product { id: number; name: string; abv: number; required_role: string; recipe: Record<string, number> | null; }
 interface Pub { id: number; name: string; }
 
 interface Brewery {
@@ -189,9 +189,15 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                                                 required
                                             >
                                                 <option value="">— Select product —</option>
-                                                {products.map(p => (
-                                                    <option key={p.id} value={p.id}>{p.name} ({p.abv}% ABV)</option>
-                                                ))}
+                                                {products
+                                                    .filter(p => brewery.staff.some(s => s.role === p.required_role))
+                                                    .map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name} ({p.abv}% ABV)</option>
+                                                    ))
+                                                }
+                                                {products.filter(p => brewery.staff.some(s => s.role === p.required_role)).length === 0 && (
+                                                    <option disabled>No qualified staff to brew any products.</option>
+                                                )}
                                             </select>
                                         </div>
                                         <div>
@@ -254,13 +260,16 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                                             onChange={e => staffForm.setData('name', e.target.value)}
                                             required
                                         />
-                                        <input
-                                            placeholder="Role"
-                                            className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-100 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        <select
+                                            className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-100 text-sm w-28 focus:outline-none focus:ring-1 focus:ring-amber-500"
                                             value={staffForm.data.role}
                                             onChange={e => staffForm.setData('role', e.target.value)}
                                             required
-                                        />
+                                        >
+                                            <option value="Brewer">Brewer</option>
+                                            <option value="Distiller">Distiller</option>
+                                            <option value="Vintner">Vintner</option>
+                                        </select>
                                         <div className="flex items-center gap-1">
                                             <span className="text-stone-500 text-sm">£</span>
                                             <input
@@ -277,7 +286,7 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                                             disabled={staffForm.processing}
                                             className="px-3 py-1.5 rounded-lg bg-stone-700 hover:bg-stone-600 text-stone-200 text-sm transition-colors"
                                         >
-                                            + Hire Brewer
+                                            + Hire {staffForm.data.role}
                                         </button>
                                     </form>
                                 </div>
