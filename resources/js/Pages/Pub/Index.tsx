@@ -182,27 +182,34 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                     <div key={pub.id} className="rounded-2xl border border-stone-800 bg-stone-900/40 overflow-hidden">
                         {/* Pub header */}
                         <div
-                            className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-stone-800/30 transition-colors"
+                            className="relative px-6 py-8 cursor-pointer transition-colors bg-cover bg-center"
+                            style={{ backgroundImage: `url('/images/pubs/${pub.category}.jpg')` }}
                             onClick={() => setExpandedPub(expandedPub === pub.id ? null : pub.id)}
                         >
-                            <div>
-                                <h3 className="font-semibold text-stone-100">{pub.name}</h3>
-                                <p className="text-xs text-stone-500 mt-0.5 capitalize">
-                                    {pub.category} · {pub.tenure} · {pub.customer_capacity} cap
-                                    {pub.has_sports_tv && ' · 📺 Sports TV'}
-                                    {!pub.is_active && ' · ⚠ Inactive'}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-6 text-sm">
-                                <div className="text-center">
-                                    <div className="text-stone-400 text-xs">Staff</div>
-                                    <div className="font-semibold text-stone-200">{pub.staff.length}</div>
+                            {/* Dark gradient overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-900/90 to-stone-900/40 hover:via-stone-900/80 transition-all"></div>
+                            
+                            {/* Content */}
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-stone-100 text-xl tracking-tight drop-shadow-md">{pub.name}</h3>
+                                    <p className="text-xs text-stone-300 mt-1 capitalize font-medium drop-shadow-sm">
+                                        {pub.category} · {pub.tenure} · {pub.customer_capacity} cap
+                                        {pub.has_sports_tv && ' · 📺 Sports TV'}
+                                        {!pub.is_active && ' · ⚠ Inactive'}
+                                    </p>
                                 </div>
-                                <div className="text-center">
-                                    <div className="text-stone-400 text-xs">Products</div>
-                                    <div className="font-semibold text-stone-200">{pub.stocks.length}</div>
+                                <div className="flex items-center gap-6 text-sm">
+                                    <div className="text-center bg-stone-900/60 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-stone-700/50">
+                                        <div className="text-stone-300 text-[10px] uppercase tracking-wider font-semibold mb-0.5">Staff</div>
+                                        <div className="font-bold text-stone-100 leading-none">{pub.staff.length}</div>
+                                    </div>
+                                    <div className="text-center bg-stone-900/60 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-stone-700/50">
+                                        <div className="text-stone-300 text-[10px] uppercase tracking-wider font-semibold mb-0.5">Products</div>
+                                        <div className="font-bold text-stone-100 leading-none">{pub.stocks.length}</div>
+                                    </div>
+                                    <span className="text-stone-400 font-bold ml-2">{expandedPub === pub.id ? '▲' : '▼'}</span>
                                 </div>
-                                <span className="text-stone-500">{expandedPub === pub.id ? '▲' : '▼'}</span>
                             </div>
                         </div>
 

@@ -128,29 +128,43 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                     </div>
                 )}
 
-                {breweries.map(brewery => (
+                {breweries.map(brewery => {
+                    let cat = 'macro';
+                    const cap = Number(brewery.capacity_litres);
+                    if (cap <= 2000) cat = 'micro';
+                    else if (cap <= 10000) cat = 'craft';
+                    else if (cap <= 50000) cat = 'regional';
+
+                    return (
                     <div key={brewery.id} className="rounded-2xl border border-stone-800 bg-stone-900/40 overflow-hidden">
                         <div
-                            className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-stone-800/30 transition-colors"
+                            className="relative px-6 py-8 cursor-pointer transition-colors bg-cover bg-center"
+                            style={{ backgroundImage: `url('/images/breweries/${cat}.jpg')` }}
                             onClick={() => setExpanded(expanded === brewery.id ? null : brewery.id)}
                         >
-                            <div>
-                                <h3 className="font-semibold text-stone-100">{brewery.name}</h3>
-                                <p className="text-xs text-stone-500 mt-0.5">
-                                    Capacity: {brewery.capacity_litres.toLocaleString('en-GB')}L/wk
-                                    {!brewery.is_active && ' · ⚠ Inactive'}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-6 text-sm">
-                                <div className="text-center">
-                                    <div className="text-stone-400 text-xs">Staff</div>
-                                    <div className="font-semibold text-stone-200">{brewery.staff.length}</div>
+                            {/* Dark gradient overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-900/90 to-stone-900/40 hover:via-stone-900/80 transition-all"></div>
+                            
+                            {/* Content */}
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-stone-100 text-xl tracking-tight drop-shadow-md">{brewery.name}</h3>
+                                    <p className="text-xs text-stone-300 mt-1 font-medium drop-shadow-sm">
+                                        Capacity: {brewery.capacity_litres.toLocaleString('en-GB')}L/wk
+                                        {!brewery.is_active && ' · ⚠ Inactive'}
+                                    </p>
                                 </div>
-                                <div className="text-center">
-                                    <div className="text-stone-400 text-xs">Ingredients</div>
-                                    <div className="font-semibold text-stone-200">{brewery.ingredients.length}</div>
+                                <div className="flex items-center gap-6 text-sm">
+                                    <div className="text-center bg-stone-900/60 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-stone-700/50">
+                                        <div className="text-stone-300 text-[10px] uppercase tracking-wider font-semibold mb-0.5">Staff</div>
+                                        <div className="font-bold text-stone-100 leading-none">{brewery.staff.length}</div>
+                                    </div>
+                                    <div className="text-center bg-stone-900/60 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-stone-700/50">
+                                        <div className="text-stone-300 text-[10px] uppercase tracking-wider font-semibold mb-0.5">Ingredients</div>
+                                        <div className="font-bold text-stone-100 leading-none">{brewery.ingredients.length}</div>
+                                    </div>
+                                    <span className="text-stone-400 font-bold ml-2">{expanded === brewery.id ? '▲' : '▼'}</span>
                                 </div>
-                                <span className="text-stone-500">{expanded === brewery.id ? '▲' : '▼'}</span>
                             </div>
                         </div>
 
@@ -342,7 +356,7 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                             </div>
                         )}
                     </div>
-                ))}
+                )})}
             </div>
         </AppLayout>
     );
