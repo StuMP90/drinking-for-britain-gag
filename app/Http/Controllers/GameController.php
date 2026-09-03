@@ -229,6 +229,17 @@ class GameController extends Controller
                 ]);
             }
 
+            // Alcohol Duty is due on the 25th of the following month
+            $alcoholDutyDueDate = $weekCommencing->copy()->addMonth()->startOfMonth()->addDays(24);
+            if ($incurredAlcoholDuty > 0) {
+                \App\Models\Liability::create([
+                    'user_id'  => $user->id,
+                    'type'     => 'alcohol_duty',
+                    'amount'   => $incurredAlcoholDuty,
+                    'due_date' => $alcoholDutyDueDate,
+                ]);
+            }
+
             // VAT is due 1 calendar month and 7 days after quarter ends
             $quarterEnd = $weekCommencing->copy()->lastOfQuarter();
             $vatDueDate = $quarterEnd->copy()->addMonthNoOverflow()->addDays(7);

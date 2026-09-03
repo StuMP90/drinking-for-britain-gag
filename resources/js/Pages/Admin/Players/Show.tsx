@@ -32,7 +32,7 @@ interface Player {
     tax_payments: TaxPayment[];
 }
 
-const fmt = (n: number) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2 });
+const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
 export default function AdminPlayerShow({
     player,

@@ -54,9 +54,9 @@ class MarketListing extends BaseModel
             $listing->supply       = min((float) $listing->supply, 9999999999.99);
             $listing->demand       = min((float) $listing->demand, 9999999999.99);
             $listing->base_supply  = min((float) $listing->base_supply, 9999999999.99);
-            $listing->price        = min((float) $listing->price, 99999999.9999);
-            $listing->retail_price = min((float) $listing->retail_price, 99999999.9999);
-            $listing->base_price   = min((float) $listing->base_price, 99999999.9999);
+            $listing->price        = min((float) $listing->price, 999999.9999);
+            $listing->retail_price = min((float) $listing->retail_price, 999999.9999);
+            $listing->base_price   = min((float) $listing->base_price, 999999.9999);
         });
     }
 

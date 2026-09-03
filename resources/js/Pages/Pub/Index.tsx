@@ -240,10 +240,10 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                                                                     {Number(s.quantity_litres).toFixed(1)}L
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-500">
-                                                                    {fmt(s.cost_per_unit, 3)}
+                                                                    {fmt(s.cost_per_unit)}
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-500">
-                                                                    {fmt(Number(s.cost_per_unit) * serv, 3)}
+                                                                    {fmt(Number(s.cost_per_unit) * serv)}
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-400">
                                                                     {servings.toLocaleString('en-GB')} {label}s

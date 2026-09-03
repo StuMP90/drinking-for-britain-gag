@@ -13,7 +13,7 @@ interface Player {
     created_at: string;
 }
 
-const fmt = (n: number) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2 });
+const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
 export default function AdminPlayersIndex({ players }: { players: Player[] }) {
     const createForm = useForm({ name: '', username: '', password: '' });
@@ -102,7 +102,7 @@ export default function AdminPlayersIndex({ players }: { players: Player[] }) {
 }
 
 function PlayerRow({ player }: { player: Player }) {
-    const fmt = (n: number) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2 });
+    const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     const pauseForm = useForm({});
     const deleteForm = useForm({});
 

@@ -29,7 +29,7 @@ interface Props {
     pendingBrews: PendingBrew[];
 }
 
-const fmt = (n: number) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2 });
+const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
 function buildCost(capacity: number, tiers: CostTier[]): number {
     for (const tier of tiers) {
