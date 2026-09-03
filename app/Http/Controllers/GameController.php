@@ -606,8 +606,14 @@ class GameController extends Controller
             }
 
             $share     = $totalWeight > 0 ? ($weights[$stock->id] / $totalWeight) : 0;
-            $allocated = $remaining * $share;
-            $sold      = min($allocated, (float) $stock->quantity_litres);
+            $allocated = $demandLitres * $share;
+            
+            // Ensure we don't allocate more than the remaining demand
+            if ($allocated > $remaining) {
+                $allocated = $remaining;
+            }
+            
+            $sold = min($allocated, (float) $stock->quantity_litres);
 
             if ($sold <= 0) {
                 continue;
@@ -659,10 +665,17 @@ class GameController extends Controller
 
         $vat = $revenue * $vatRate;
 
+        // capacity_servings should represent the total potential demand (in servings),
+        // extrapolated using the actual sales mix so the units match sales_servings.
+        $customerDemandLitres = $customerDemand * $litresPerPint;
+        $capacityServings = $litresSold > 0 
+            ? $salesServings * ($customerDemandLitres / $litresSold) 
+            : $customerDemand;
+
         return [
             'pub_id'            => $pub->id,
             'pub_name'          => $pub->name,
-            'capacity_servings' => round($demandDrinks),
+            'capacity_servings' => round($capacityServings),
             'sales_servings'    => round($salesServings),
             'revenue'           => round($revenue, 2),
             'cogs'              => round($cogs, 2),

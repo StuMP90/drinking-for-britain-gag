@@ -58,7 +58,7 @@ interface Props {
     settings: Settings;
 }
 
-const fmt = (n: number) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2 });
+const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
 export default function PubIndex({ pubs, balance, settings }: Props) {
     const [showBuild, setShowBuild] = useState(false);
@@ -240,10 +240,10 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                                                                     {Number(s.quantity_litres).toFixed(1)}L
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-500">
-                                                                    {fmt(s.cost_per_unit)}
+                                                                    {fmt(s.cost_per_unit, 3)}
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-500">
-                                                                    {fmt(Number(s.cost_per_unit) * serv)}
+                                                                    {fmt(Number(s.cost_per_unit) * serv, 3)}
                                                                 </td>
                                                                 <td className="py-2 pr-4 text-right text-stone-400">
                                                                     {servings.toLocaleString('en-GB')} {label}s
