@@ -15,12 +15,29 @@ class BreweryController extends Controller
     {
         $user = auth()->user();
 
+        $pendingBrews = TurnAction::pending()
+            ->where('user_id', $user->id)
+            ->where('type', 'brew')
+            ->get()
+            ->map(function ($action) {
+                $listing = MarketListing::find($action->payload['market_listing_id'] ?? 0);
+                $pub = \App\Models\Pub::find($action->payload['pub_id'] ?? null);
+                return [
+                    'id' => $action->id,
+                    'brewery_id' => $action->payload['brewery_id'] ?? null,
+                    'product_name' => $listing ? $listing->name : 'Unknown',
+                    'quantity_litres' => $action->payload['quantity_litres'] ?? 0,
+                    'pub_name' => $pub ? $pub->name : 'Brewery Storage',
+                ];
+            });
+
         return Inertia::render('Brewery/Index', [
             'breweries'      => $user->breweries()->with('staff', 'ingredients.marketListing', 'stocks.marketListing')->get(),
             'pubs'           => $user->pubs()->get(['id', 'name']),
             'products'       => MarketListing::active()->products()->whereNotNull('recipe')->get()->append('required_role'),
             'balance'        => $user->balance,
             'buildCostTiers' => Setting::json('brewery_build_cost_tiers'),
+            'pendingBrews'   => $pendingBrews,
         ]);
     }
 
@@ -74,6 +91,22 @@ class BreweryController extends Controller
         
         if (! $brewery->staff()->where('role', $requiredRole)->exists()) {
             return back()->with('error', "You need a {$requiredRole} to brew {$listing->name}.");
+        }
+
+        $pendingBrews = TurnAction::pending()
+            ->where('user_id', auth()->id())
+            ->where('type', 'brew')
+            ->get();
+            
+        $currentlyQueued = $pendingBrews->filter(function($action) use ($brewery) {
+            return ($action->payload['brewery_id'] ?? null) == $brewery->id;
+        })->sum(function($action) {
+            return (float) ($action->payload['quantity_litres'] ?? 0);
+        });
+
+        if ($currentlyQueued + $request->quantity_litres > $brewery->capacity_litres) {
+            $remaining = max(0, $brewery->capacity_litres - $currentlyQueued);
+            return back()->with('error', "Cannot queue {$request->quantity_litres}L. You only have {$remaining}L of capacity remaining this week.");
         }
 
         TurnAction::create([

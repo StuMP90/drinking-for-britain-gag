@@ -8,6 +8,7 @@ interface Ingredient { id: number; market_listing_id: number; quantity_kg: numbe
 interface Stock { id: number; quantity_litres: number; market_listing: { name: string }; }
 interface Product { id: number; name: string; abv: number; required_role: string; recipe: Record<string, number> | null; }
 interface Pub { id: number; name: string; }
+interface PendingBrew { id: number; brewery_id: number; product_name: string; quantity_litres: number; pub_name: string; }
 
 interface Brewery {
     id: number;
@@ -25,6 +26,7 @@ interface Props {
     products: Product[];
     balance: number;
     buildCostTiers: CostTier[];
+    pendingBrews: PendingBrew[];
 }
 
 const fmt = (n: number) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2 });
@@ -38,7 +40,7 @@ function buildCost(capacity: number, tiers: CostTier[]): number {
     return capacity * 4;
 }
 
-export default function BreweryIndex({ breweries, pubs, products, balance, buildCostTiers }: Props) {
+export default function BreweryIndex({ breweries, pubs, products, balance, buildCostTiers, pendingBrews }: Props) {
     const [showBuild, setShowBuild] = useState(false);
     const [expanded, setExpanded] = useState<number | null>(null);
 
@@ -230,6 +232,21 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                                             Queue Brew
                                         </button>
                                     </form>
+
+                                    {pendingBrews.filter(b => b.brewery_id === brewery.id).length > 0 && (
+                                        <div className="mt-4 pt-3 border-t border-stone-800/50">
+                                            <h5 className="text-xs font-semibold text-stone-400 mb-2 uppercase tracking-wider">Already Queued For Next Turn</h5>
+                                            <div className="space-y-1.5">
+                                                {pendingBrews.filter(b => b.brewery_id === brewery.id).map(brew => (
+                                                    <div key={brew.id} className="flex gap-4 text-sm bg-stone-800/20 px-3 py-1.5 rounded border border-stone-800/50 items-center">
+                                                        <span className="text-stone-300 w-36 shrink-0">{brew.product_name}</span>
+                                                        <span className="text-amber-500 font-medium shrink-0">{brew.quantity_litres.toLocaleString()}L</span>
+                                                        <span className="text-stone-500 text-xs">→ {brew.pub_name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Staff */}

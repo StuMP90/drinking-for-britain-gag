@@ -73,12 +73,13 @@ class GameController extends Controller
             );
 
             $actionLog = [];
+            $breweryUsedCapacity = [];
             foreach ($pendingActions as $action) {
                 $result = match ($action->type) {
                     'purchase_ingredient' => $this->applyPurchaseIngredient($user, $action->payload),
                     'purchase_product'    => $this->applyPurchaseProduct($user, $action->payload),
                     'transfer'            => $this->applyTransfer($user, $action->payload),
-                    'brew'                => $this->applyBrew($user, $action->payload),
+                    'brew'                => $this->applyBrew($user, $action->payload, $breweryUsedCapacity),
                     default               => ['success' => false, 'message' => 'Unknown action type'],
                 };
                 $action->update(['processed_at' => now(), 'result' => $result]);
@@ -434,16 +435,27 @@ class GameController extends Controller
         ];
     }
 
-    private function applyBrew(User $user, array $payload): array
+    private function applyBrew(User $user, array $payload, array &$breweryUsedCapacity = []): array
     {
         $listing       = MarketListing::find($payload['market_listing_id'] ?? 0);
         $brewery       = Brewery::where('user_id', $user->id)->find($payload['brewery_id'] ?? 0);
-        $targetPub     = Pub::where('user_id', $user->id)->find($payload['pub_id'] ?? 0);
         $quantityLitres = (float) ($payload['quantity_litres'] ?? 0);
 
         if (! $listing || ! $brewery || $quantityLitres <= 0) {
             return ['success' => false, 'message' => 'Invalid brew payload'];
         }
+
+        $usedSoFar = $breweryUsedCapacity[$brewery->id] ?? 0;
+        $capacity  = (float) $brewery->capacity_litres;
+        if ($usedSoFar + $quantityLitres > $capacity) {
+            $quantityLitres = $capacity - $usedSoFar;
+            if ($quantityLitres <= 0) {
+                return ['success' => false, 'message' => 'Brewery capacity exceeded for this turn'];
+            }
+        }
+        $breweryUsedCapacity[$brewery->id] = $usedSoFar + $quantityLitres;
+
+        $targetPub = Pub::where('user_id', $user->id)->find($payload['pub_id'] ?? 0);
 
         $requiredRole = MarketListing::requiredStaffRole((float) $listing->abv);
         if (! $brewery->staff()->where('role', $requiredRole)->exists()) {
