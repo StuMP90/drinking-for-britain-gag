@@ -36,10 +36,10 @@ Route::get('/', function () {
 })->name('home');
 
 // ─── Authenticated player routes ──────────────────────────────────────────────
-Route::middleware(['auth', 'not-paused'])->group(function () {
+Route::middleware(['auth', 'not-paused', 'throttle:web'])->group(function () {
     // Dashboard / turn processing
     Route::get('/dashboard', [GameController::class, 'index'])->name('dashboard');
-    Route::post('/turn', [GameController::class, 'store'])->name('turn.store');
+    Route::post('/turn', [GameController::class, 'store'])->name('turn.store')->middleware('throttle:turn');
 
     // Pubs
     Route::get('/pubs', [PubController::class, 'index'])->name('pubs.index');
