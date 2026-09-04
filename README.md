@@ -68,7 +68,13 @@ Players take on the role of a hospitality entrepreneur. The goal is to build an 
     cp .env.example .env
     php artisan key:generate
     ```
-4.  **Database Migration & Seeding:**
+4.  **Set Directory Permissions:**
+    Ensure that the `storage` and `bootstrap/cache` directories are writable by your web server:
+    ```bash
+    chmod -R 775 storage bootstrap/cache
+    chown -R $USER:www-data storage bootstrap/cache
+    ```
+5.  **Database Migration & Seeding:**
     Run migrations and seed the database with initial settings, products, and a default admin user.
     ```bash
     php artisan migrate --seed
@@ -78,9 +84,31 @@ Players take on the role of a hospitality entrepreneur. The goal is to build an 
     npm run build
     ```
     *(For development, run `npm run dev`)*
-6.  **Serve:**
+7.  **Serve the Application:**
+    For local development, you can use PHP's built-in server:
     ```bash
     php artisan serve
+    ```
+    For production or a more robust development environment, configure a web server like **Nginx** or **Apache** to point to the `public` directory.
+    
+    *Example Nginx configuration snippet:*
+    ```nginx
+    server {
+        listen 80;
+        server_name yourdomain.com;
+        root /path/to/drinking-for-britain/public;
+        
+        index index.php index.html;
+        
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+        
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        }
+    }
     ```
 
 ## Development Notes
