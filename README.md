@@ -121,6 +121,16 @@ The game uses a customized authentication system. Users log in with a **username
 
 Note: Public registration and password reset flows are intentionally disabled.
 
+#### Two-Factor Authentication (2FA)
+Players and administrators have the option to enable Two-Factor Authentication via WebAuthn passkeys. This enforces "true 2FA" where **both** a password and a registered passkey are required to log in.
+This integration has been fully tested and supports:
+*   Modern hardware security keys (e.g., FIDO2 / U2F devices)
+*   Phone-based passkeys (FaceID, TouchID, Android biometric auth)
+*   Platform authenticators (Windows Hello, macOS TouchID)
+
+Admins have the ability to forcibly remove 2FA from a player's account if they lose their passkey.
+
+
 ### Code Architecture
 *   **Controllers:** Standard Laravel controllers handle web requests. `GameController` handles the complex turn-processing logic.
 *   **Models:** Extended from a custom `BaseModel` to ensure consistent UK date formatting (`d/m/Y`).

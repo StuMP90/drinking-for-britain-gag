@@ -86,6 +86,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/players', [Admin\PlayerController::class, 'store'])->name('players.store');
     Route::get('/players/{player}', [Admin\PlayerController::class, 'show'])->name('players.show');
     Route::post('/players/{player}/reset', [Admin\PlayerController::class, 'reset'])->name('players.reset');
+    Route::post('/players/{player}/remove-2fa', [Admin\PlayerController::class, 'remove2fa'])->name('players.remove-2fa');
     Route::post('/players/{player}/toggle-pause', [Admin\PlayerController::class, 'togglePause'])->name('players.toggle-pause');
     Route::delete('/players/{player}', [Admin\PlayerController::class, 'destroy'])->name('players.destroy');
 

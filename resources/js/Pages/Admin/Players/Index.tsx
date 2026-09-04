@@ -11,6 +11,7 @@ interface Player {
     pubs_count: number;
     breweries_count: number;
     turns_count: number;
+    passkeys_count: number;
     created_at: string;
 }
 
@@ -120,9 +121,18 @@ function PlayerRow({ player }: { player: Player }) {
             <td className="px-6 py-3 text-center text-stone-400">{player.breweries_count}</td>
             <td className="px-6 py-3 text-center text-stone-400">{player.turns_count}</td>
             <td className="px-6 py-3 text-center">
-                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${player.is_paused ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}`}>
-                    {player.is_paused ? 'Paused' : 'Active'}
-                </span>
+                <div className="flex items-center justify-center gap-1.5">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${player.is_paused ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}`}>
+                        {player.is_paused ? 'Paused' : 'Active'}
+                    </span>
+                    {player.passkeys_count > 0 && (
+                        <div title="2FA Enabled" className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                                <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    )}
+                </div>
             </td>
             <td className="px-6 py-3 text-center">
                 {!player.is_admin ? (

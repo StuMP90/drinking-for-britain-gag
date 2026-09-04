@@ -30,6 +30,7 @@ interface Player {
     breweries: Brewery[];
     turns: Turn[];
     tax_payments: TaxPayment[];
+    passkeys_count?: number;
 }
 
 const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -52,6 +53,12 @@ export default function AdminPlayerShow({
     const handleReset = () => {
         if (confirm("Are you sure you want to reset this player? This will wipe ALL their progress and reset their cash to £100,000.")) {
             post(route('admin.players.reset', player.id));
+        }
+    };
+
+    const handleRemove2fa = () => {
+        if (confirm("Are you sure you want to remove 2FA from this player? This will allow them to log in with just their password.")) {
+            post(route('admin.players.remove-2fa', player.id));
         }
     };
 
@@ -98,7 +105,16 @@ export default function AdminPlayerShow({
                     <span className="px-2 py-0.5 rounded bg-red-900/40 text-red-400 text-xs font-medium">Paused</span>
                 )}
                 
-                <div className="ml-auto">
+                <div className="ml-auto flex gap-3">
+                    {(player.passkeys_count ?? 0) > 0 && (
+                        <button
+                            onClick={handleRemove2fa}
+                            disabled={processing}
+                            className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-lg text-sm font-medium transition"
+                        >
+                            Remove 2FA
+                        </button>
+                    )}
                     <button
                         onClick={handleReset}
                         disabled={processing}

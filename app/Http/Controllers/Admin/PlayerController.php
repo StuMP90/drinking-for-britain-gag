@@ -13,7 +13,7 @@ class PlayerController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Players/Index', [
-            'players' => User::withCount(['pubs', 'breweries', 'turns'])
+            'players' => User::withCount(['pubs', 'breweries', 'turns', 'passkeys'])
                 ->orderByDesc('created_at')
                 ->get(),
         ]);
@@ -22,7 +22,7 @@ class PlayerController extends Controller
     public function show(User $player)
     {
         return Inertia::render('Admin/Players/Show', [
-            'player'      => $player->load('pubs.staff', 'breweries.staff', 'turns', 'taxPayments'),
+            'player'      => $player->load('pubs.staff', 'breweries.staff', 'turns', 'taxPayments')->loadCount('passkeys'),
             'taxTotals'   => $player->taxPayments()
                 ->selectRaw('type, SUM(amount) as total')
                 ->groupBy('type')
@@ -69,6 +69,13 @@ class PlayerController extends Controller
         $player->resetGame();
         
         return back()->with('success', "Player {$player->username} has been reset to starting state.");
+    }
+
+    public function remove2fa(User $player)
+    {
+        $player->passkeys()->delete();
+
+        return back()->with('success', "2FA (passkeys) removed for player {$player->username}.");
     }
 
     public function destroy(User $player)
