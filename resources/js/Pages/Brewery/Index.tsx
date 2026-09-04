@@ -42,7 +42,7 @@ function buildCost(capacity: number, tiers: CostTier[]): number {
 
 export default function BreweryIndex({ breweries, pubs, products, balance, buildCostTiers, pendingBrews }: Props) {
     const [showBuild, setShowBuild] = useState(false);
-    const [expanded, setExpanded] = useState<number | null>(null);
+    const [expanded, setExpanded] = useState<number | null>(breweries.length === 1 ? breweries[0].id : null);
 
     const buildForm = useForm({ name: '', capacity_litres: 1000 });
     const brewForm = useForm({ market_listing_id: '', quantity_litres: 100, pub_id: '' });

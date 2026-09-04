@@ -62,7 +62,7 @@ const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString
 
 export default function PubIndex({ pubs, balance, settings }: Props) {
     const [showBuild, setShowBuild] = useState(false);
-    const [expandedPub, setExpandedPub] = useState<number | null>(null);
+    const [expandedPub, setExpandedPub] = useState<number | null>(pubs.length === 1 ? pubs[0].id : null);
 
     const buildForm = useForm({ name: '', category: 'community', tenure: 'leasehold', has_sports_tv: false });
     const staffForm = useForm({ staffable_type: 'pub', staffable_id: 0, name: '', role: 'Bar Staff', weekly_wage: 400 });
