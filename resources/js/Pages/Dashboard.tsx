@@ -15,6 +15,7 @@ interface DrinkSale {
     name: string;
     quantity_litres: number;
     quantity_servings: number;
+    end_stock_servings?: number;
     cost: number;
     retail_price: number;
     profit: number;
@@ -243,7 +244,12 @@ export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, 
                                                     <tbody>
                                                         {pub.drinks.map((drink, idx) => (
                                                             <tr key={idx} className="border-b border-stone-800/30 hover:bg-stone-800/20 transition-colors">
-                                                                <td className="px-4 py-2 text-stone-300">{drink.name}</td>
+                                                                <td className="px-4 py-2 text-stone-300">
+                                                                    {drink.name}
+                                                                    {drink.end_stock_servings !== undefined && drink.end_stock_servings < drink.quantity_servings && (
+                                                                        <span className="text-amber-500 font-medium ml-2 text-xs uppercase tracking-wider">(Low Stock)</span>
+                                                                    )}
+                                                                </td>
                                                                 <td className="px-4 py-2 text-right text-stone-400">{Math.round(drink.quantity_servings)}</td>
                                                                 <td className="px-4 py-2 text-right text-stone-400">{fmt(drink.cost)}</td>
                                                                 <td className="px-4 py-2 text-right text-stone-400">{fmt(drink.retail_price)}</td>

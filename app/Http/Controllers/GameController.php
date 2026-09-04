@@ -661,6 +661,7 @@ class GameController extends Controller
                     'name'              => $name,
                     'quantity_litres'   => 0,
                     'quantity_servings' => 0,
+                    'end_stock_servings'=> 0,
                     'cost'              => 0,
                     'retail_price'      => (float) $stock->retail_price,
                     'profit'            => 0,
@@ -673,6 +674,9 @@ class GameController extends Controller
             $drinks[$name]['profit']            += $itemProfit;
 
             $stock->decrement('quantity_litres', $sold);
+            $stock->quantity_litres -= $sold;
+            $drinks[$name]['end_stock_servings'] += ($stock->quantity_litres / max(0.001, $servingSize));
+            
             $remaining -= $sold;
         }
 
