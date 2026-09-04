@@ -42,6 +42,7 @@ Players take on the role of a hospitality entrepreneur. The goal is to build an 
     *   Admin dashboard for managing players (pause/delete/reset), viewing player P&L histories, and managing global game settings (capacities, costs, market fluctuations).
 
 ### Recent Additions
+*   **Property Sales:** Players can now liquidate their assets. Selling a pub returns the property's Net Book Value (NBV) adjusted by a random variance (-5% to +25%), plus 75% of stock value, minus 4 weeks' severance pay for staff. Selling a brewery functions similarly but incurs a 10% disposal fee for stock and cancels pending brews.
 *   **Pub Upgrades:** Players can now upgrade existing pubs with Sports TV (incurring a 4-week upfront installation cost) or convert them from Leasehold to Freehold (dynamically affecting the pub's asset value and straight-line depreciation).
 *   **Dashboard Improvements:** Upcoming tax liabilities are now cleanly grouped and summarized by type and due date.
 *   **Admin Settings:** The global game settings UI is now fully functional, allowing real-time edits to properties like starting cash balances and game constants.
@@ -87,7 +88,7 @@ Players take on the role of a hospitality entrepreneur. The goal is to build an 
 ### Authentication
 The game uses a customized authentication system. Users log in with a **username and password** (instead of the default Laravel email). 
 
-*   **Admin Login:** Username: `admin` (seeded by default, password: `password`)
+*   **Admin Login:** Username: `admin` (seeded by default, password: `changeme123!`)
 *   **Player Login:** Username: `player` (seeded by default, password: `password`)
 
 Note: Public registration and password reset flows are intentionally disabled.

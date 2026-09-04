@@ -75,6 +75,62 @@ class BreweryController extends Controller
         return back()->with('success', 'Brewery demolished.');
     }
 
+    public function sell(Brewery $brewery)
+    {
+        $this->authorize('delete', $brewery);
+        
+        $user = auth()->user();
+
+        // 1. Calculate stock disposal cost (10% of cost)
+        $stockDisposalCost = 0;
+        foreach ($brewery->stocks as $stock) {
+            $stockDisposalCost += $stock->cost_per_unit * $stock->quantity_litres * 0.10;
+        }
+
+        // 2. Calculate staff severance (4 weeks wages)
+        $severanceCost = 0;
+        foreach ($brewery->staff as $staff) {
+            $severanceCost += $staff->weekly_wage * 4;
+        }
+
+        // 3. Calculate sale price (NBV * random modifier)
+        $nbv = $brewery->build_cost - $brewery->accumulated_depreciation;
+        $modifier = rand(-5, 25) / 100;
+        $salePrice = $nbv * (1 + $modifier);
+
+        // 4. Update balance
+        $netReturn = $salePrice - $stockDisposalCost - $severanceCost;
+        $user->increment('balance', $netReturn);
+
+        // 5. Cleanup
+        $breweryName = $brewery->name;
+        
+        // Remove pending brews
+        TurnAction::pending()
+            ->where('user_id', $user->id)
+            ->where('type', 'brew')
+            ->get()
+            ->filter(function($action) use ($brewery) {
+                return ($action->payload['brewery_id'] ?? null) == $brewery->id;
+            })->each(function($action) {
+                $action->delete();
+            });
+
+        $brewery->stocks()->delete();
+        $brewery->ingredients()->delete();
+        $brewery->staff()->delete();
+        $brewery->delete();
+
+        return back()->with('success', sprintf(
+            "Sold '%s'. Sale Price: £%s, Stock Disposal: £%s, Staff Severance: £%s. Net Return: £%s.",
+            $breweryName,
+            number_format($salePrice, 2),
+            number_format($stockDisposalCost, 2),
+            number_format($severanceCost, 2),
+            number_format($netReturn, 2)
+        ));
+    }
+
     /** Queue a brew action */
     public function queueBrew(Request $request, Brewery $brewery)
     {

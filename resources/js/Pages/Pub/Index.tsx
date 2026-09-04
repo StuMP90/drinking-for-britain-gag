@@ -432,6 +432,29 @@ export default function PubIndex({ pubs, balance, settings }: Props) {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Management section */}
+                                <div className="mt-4 pt-4 border-t border-stone-800/50">
+                                    <h4 className="text-sm font-semibold text-red-400 mb-3">Management</h4>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center justify-between py-2">
+                                            <div>
+                                                <div className="text-stone-200 text-sm font-medium">Sell Pub</div>
+                                                <div className="text-stone-500 text-xs">Liquidate this pub. You will receive the property value (NBV +/- random modifier), 75% of stock value, minus 4 weeks severance pay for staff.</div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Are you sure you want to sell ${pub.name}? This action cannot be undone.`)) {
+                                                        router.post(route('pubs.sell', pub.id), {}, { preserveScroll: true });
+                                                    }
+                                                }}
+                                                className="px-4 py-1.5 rounded-lg bg-red-900/40 hover:bg-red-800/60 text-red-300 font-semibold text-sm transition-colors border border-red-900/50"
+                                            >
+                                                Sell Pub
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

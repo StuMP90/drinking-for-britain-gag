@@ -123,6 +123,49 @@ class PubController extends Controller
         return back()->with('success', 'Pub closed.');
     }
 
+    public function sell(Pub $pub)
+    {
+        $this->authorize('delete', $pub);
+        
+        $user = auth()->user();
+
+        // 1. Calculate stock value (75% of cost)
+        $stockReturn = 0;
+        foreach ($pub->stocks as $stock) {
+            $stockReturn += $stock->cost_per_unit * $stock->quantity_litres * 0.75;
+        }
+
+        // 2. Calculate staff severance (4 weeks wages)
+        $severanceCost = 0;
+        foreach ($pub->staff as $staff) {
+            $severanceCost += $staff->weekly_wage * 4;
+        }
+
+        // 3. Calculate sale price (NBV * random modifier)
+        $nbv = $pub->build_cost - $pub->accumulated_depreciation;
+        $modifier = rand(-5, 25) / 100;
+        $salePrice = $nbv * (1 + $modifier);
+
+        // 4. Update balance
+        $netReturn = $salePrice + $stockReturn - $severanceCost;
+        $user->increment('balance', $netReturn);
+
+        // 5. Cleanup
+        $pubName = $pub->name;
+        $pub->stocks()->delete();
+        $pub->staff()->delete();
+        $pub->delete();
+
+        return back()->with('success', sprintf(
+            "Sold '%s'. Sale Price: £%s, Stock Return: £%s, Staff Severance: £%s. Net Return: £%s.",
+            $pubName,
+            number_format($salePrice, 2),
+            number_format($stockReturn, 2),
+            number_format($severanceCost, 2),
+            number_format($netReturn, 2)
+        ));
+    }
+
     /** Update retail prices for pub stocks */
     public function updateStockPrice(Request $request, Pub $pub)
     {

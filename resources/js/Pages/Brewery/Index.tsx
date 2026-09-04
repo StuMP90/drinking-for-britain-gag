@@ -353,6 +353,29 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                                         </button>
                                     </form>
                                 </div>
+
+                                {/* Management section */}
+                                <div className="mt-4 pt-4 border-t border-stone-800/50">
+                                    <h4 className="text-sm font-semibold text-red-400 mb-3">Management</h4>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center justify-between py-2">
+                                            <div>
+                                                <div className="text-stone-200 text-sm font-medium">Sell Brewery</div>
+                                                <div className="text-stone-500 text-xs">Liquidate this brewery. You will receive the property value (NBV +/- random modifier), minus a 10% stock disposal fee, minus 4 weeks severance pay for staff. All pending brews will be cancelled.</div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Are you sure you want to sell ${brewery.name}? This action cannot be undone.`)) {
+                                                        router.post(route('breweries.sell', brewery.id), {}, { preserveScroll: true });
+                                                    }
+                                                }}
+                                                className="px-4 py-1.5 rounded-lg bg-red-900/40 hover:bg-red-800/60 text-red-300 font-semibold text-sm transition-colors border border-red-900/50"
+                                            >
+                                                Sell Brewery
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

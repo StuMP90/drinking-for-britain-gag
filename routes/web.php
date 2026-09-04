@@ -42,12 +42,14 @@ Route::middleware(['auth', 'not-paused'])->group(function () {
     Route::post('/pubs', [PubController::class, 'store'])->name('pubs.store');
     Route::patch('/pubs/{pub}', [PubController::class, 'update'])->name('pubs.update');
     Route::delete('/pubs/{pub}', [PubController::class, 'destroy'])->name('pubs.destroy');
+    Route::post('/pubs/{pub}/sell', [PubController::class, 'sell'])->name('pubs.sell');
     Route::post('/pubs/{pub}/stock-price', [PubController::class, 'updateStockPrice'])->name('pubs.stock-price');
 
     // Breweries
     Route::get('/breweries', [BreweryController::class, 'index'])->name('breweries.index');
     Route::post('/breweries', [BreweryController::class, 'store'])->name('breweries.store');
     Route::delete('/breweries/{brewery}', [BreweryController::class, 'destroy'])->name('breweries.destroy');
+    Route::post('/breweries/{brewery}/sell', [BreweryController::class, 'sell'])->name('breweries.sell');
     Route::post('/breweries/{brewery}/brew', [BreweryController::class, 'queueBrew'])->name('breweries.brew');
 
     Route::get('/market', [MarketController::class, 'index'])->name('market.index');
