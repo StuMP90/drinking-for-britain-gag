@@ -269,7 +269,7 @@ class GameController extends Controller
             // 11. Settle Due Liabilities
             $dueLiabilities = \App\Models\Liability::where('user_id', $user->id)
                 ->whereNull('paid_at')
-                ->where('due_date', '<=', $weekCommencing)
+                ->where('due_date', '<=', $weekCommencing->copy()->endOfWeek())
                 ->get();
 
             $totalPaidLiabilities = 0;
