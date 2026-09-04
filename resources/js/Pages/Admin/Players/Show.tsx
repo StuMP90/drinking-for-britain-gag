@@ -41,7 +41,7 @@ export default function AdminPlayerShow({
     player: Player;
     taxTotals: Record<string, number>;
 }) {
-    const totalTax = Object.values(taxTotals).reduce((a, b) => a + b, 0);
+    const totalTax = Object.values(taxTotals).reduce((a, b) => Number(a) + Number(b), 0);
     const { post, processing } = useForm();
 
     const handleReset = () => {

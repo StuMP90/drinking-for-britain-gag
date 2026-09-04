@@ -26,7 +26,8 @@ class PlayerController extends Controller
             'taxTotals'   => $player->taxPayments()
                 ->selectRaw('type, SUM(amount) as total')
                 ->groupBy('type')
-                ->pluck('total', 'type'),
+                ->pluck('total', 'type')
+                ->map(fn($v) => (float) $v),
         ]);
     }
 
