@@ -11,6 +11,12 @@ Route::middleware('guest')->group(function () {
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('login/2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'create'])
+        ->name('login.2fa');
+    Route::get('login/2fa/options', [\App\Http\Controllers\Auth\TwoFactorController::class, 'options'])
+        ->name('login.2fa.options');
+    Route::post('login/2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'store']);
 });
 
 Route::middleware('auth')->group(function () {

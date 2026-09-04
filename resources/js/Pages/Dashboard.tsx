@@ -284,7 +284,7 @@ export default function Dashboard({ balance, latestTurn, recentTurns, nextWeek, 
                                     <tr className="text-stone-500 text-xs uppercase tracking-wider border-b border-stone-800">
                                         <th className="px-4 py-2 text-left">Tax Type</th>
                                         <th className="px-4 py-2 text-right">Amount Due</th>
-                                        <th className="px-4 py-2 text-right">Due Date (w/c)</th>
+                                        <th className="px-4 py-2 text-right">Due Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>

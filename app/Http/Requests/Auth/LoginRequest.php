@@ -36,7 +36,7 @@ class LoginRequest extends FormRequest
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): ?User
     {
         $this->ensureIsNotRateLimited();
 
@@ -58,8 +58,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if ($user->passkeys()->exists()) {
+            RateLimiter::clear($this->throttleKey());
+            return $user;
+        }
+
         Auth::login($user, $this->boolean('remember'));
         RateLimiter::clear($this->throttleKey());
+        return null;
     }
 
     public function ensureIsNotRateLimited(): void

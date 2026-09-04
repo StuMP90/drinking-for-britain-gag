@@ -1,6 +1,6 @@
 import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CostTier { max_litres: number | null; cost_per_litre: number; }
 interface Staff { id: number; name: string; role: string; weekly_wage: number; satisfaction: number; }
@@ -43,6 +43,12 @@ function buildCost(capacity: number, tiers: CostTier[]): number {
 export default function BreweryIndex({ breweries, pubs, products, balance, buildCostTiers, pendingBrews }: Props) {
     const [showBuild, setShowBuild] = useState(false);
     const [expanded, setExpanded] = useState<number | null>(breweries.length === 1 ? breweries[0].id : null);
+
+    useEffect(() => {
+        if (breweries.length === 1) {
+            setExpanded(breweries[0].id);
+        }
+    }, [breweries.length]);
 
     const buildForm = useForm({ name: '', capacity_litres: 1000 });
     const brewForm = useForm({ market_listing_id: '', quantity_litres: 100, pub_id: '' });

@@ -30,6 +30,12 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
                             £{Number(user?.balance ?? 0).toLocaleString('en-GB', { minimumFractionDigits: 2 })}
                         </span>
                         <Link
+                            href={route('profile.edit')}
+                            className="text-xs text-stone-500 hover:text-stone-300 transition-colors"
+                        >
+                            Profile
+                        </Link>
+                        <Link
                             href={route('logout')}
                             method="post"
                             as="button"

@@ -9,6 +9,7 @@
         "php": "^8.3",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^13.17",
+        "laravel/passkeys": "^0.2.1",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "tightenco/ziggy": "^2.0"

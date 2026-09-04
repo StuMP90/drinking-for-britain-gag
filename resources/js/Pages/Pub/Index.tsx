@@ -1,6 +1,6 @@
 import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Stock {
     id: number;
@@ -63,6 +63,12 @@ const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString
 export default function PubIndex({ pubs, balance, settings }: Props) {
     const [showBuild, setShowBuild] = useState(false);
     const [expandedPub, setExpandedPub] = useState<number | null>(pubs.length === 1 ? pubs[0].id : null);
+
+    useEffect(() => {
+        if (pubs.length === 1) {
+            setExpandedPub(pubs[0].id);
+        }
+    }, [pubs.length]);
 
     const buildForm = useForm({ name: '', category: 'community', tenure: 'leasehold', has_sports_tv: false });
     const staffForm = useForm({ staffable_type: 'pub', staffable_id: 0, name: '', role: 'Bar Staff', weekly_wage: 400 });
