@@ -5,6 +5,7 @@ interface Stats {
     cumulative_revenue: number;
     total_tax_paid: number;
     outstanding_tax: number;
+    indirect_tax: number;
 }
 
 export default function Welcome({ stats }: { stats: Stats }) {
@@ -60,13 +61,14 @@ export default function Welcome({ stats }: { stats: Stats }) {
 
                 {/* Live stats */}
                 <section className="py-16 px-6 border-t border-stone-800">
-                    <div className="max-w-5xl mx-auto">
+                    <div className="max-w-6xl mx-auto">
                         <h2 className="text-center text-2xl font-bold text-stone-300 mb-10">Live Game Stats</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                             <StatCard icon="👥" label="Players" value={stats.total_players.toLocaleString('en-GB')} />
-                            <StatCard icon="💷" label="Total Revenue Generated" value={fmt(stats.cumulative_revenue)} />
-                            <StatCard icon="🏛️" label="Paid to HMRC" value={fmt(stats.total_tax_paid)} highlight />
-                            <StatCard icon="📝" label="Taxes Due" value={fmt(stats.outstanding_tax)} />
+                            <StatCard icon="💷" label="Total Revenue" value={fmt(stats.cumulative_revenue)} />
+                            <StatCard icon="🏛️" label="Direct Tax Paid" value={fmt(stats.total_tax_paid)} highlight />
+                            <StatCard icon="📝" label="Direct Tax Due" value={fmt(stats.outstanding_tax)} />
+                            <StatCard icon="📦" label="Indirect Supply Tax" value={fmt(stats.indirect_tax)} highlight />
                         </div>
                     </div>
                 </section>

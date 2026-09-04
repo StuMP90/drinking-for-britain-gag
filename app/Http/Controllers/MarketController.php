@@ -69,6 +69,12 @@ class MarketController extends Controller
 
             // Reduce market supply
             $listing->decrement('supply', $qty);
+
+            // Record estimated indirect taxes paid via the supply chain (duty + 20% of remaining cost for NI/Corp Tax etc)
+            $duty = \App\Models\MarketListing::alcoholDutyPerLitre((float) $listing->abv) * $qty;
+            $indirect = $duty + (($cost - $duty) * 0.20);
+            $currentGlobal = \App\Models\Setting::number('global_indirect_tax', 0);
+            \App\Models\Setting::set('global_indirect_tax', $currentGlobal + $indirect);
         });
 
         $name = $listing->name;

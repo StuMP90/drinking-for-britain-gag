@@ -16,10 +16,13 @@ use Inertia\Inertia;
 
 // ─── Public marketing homepage ────────────────────────────────────────────────
 Route::get('/', function () {
-    $totalPlayers     = User::where('is_admin', false)->count();
+    $totalPlayers      = User::where('is_admin', false)->count();
     $cumulativeRevenue = Turn::sum('revenue');
-    $cumulativeTax    = TaxPayment::sum('amount');
-    $outstandingTax   = \App\Models\Liability::whereNull('paid_at')->sum('amount');
+    $cumulativeTax     = TaxPayment::sum('amount');
+    $outstandingTax    = \App\Models\Liability::whereNull('paid_at')->sum('amount');
+
+    // Read the estimated indirect taxes paid via the supply chain for wholesale purchases from settings
+    $indirectTax = \App\Models\Setting::number('global_indirect_tax', 0);
 
     return Inertia::render('Welcome', [
         'stats' => [
@@ -27,6 +30,7 @@ Route::get('/', function () {
             'cumulative_revenue' => round($cumulativeRevenue, 2),
             'total_tax_paid'     => round($cumulativeTax, 2),
             'outstanding_tax'    => round($outstandingTax, 2),
+            'indirect_tax'       => round($indirectTax, 2),
         ],
     ]);
 })->name('home');
