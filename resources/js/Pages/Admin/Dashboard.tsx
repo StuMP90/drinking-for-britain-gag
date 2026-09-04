@@ -9,6 +9,8 @@ interface Stats {
     cumulative_revenue: number;
     cumulative_profit: number;
     total_tax_paid: number;
+    outstanding_tax: number;
+    indirect_tax: number;
     tax_breakdown: Record<string, number>;
 }
 
@@ -39,11 +41,13 @@ export default function AdminDashboard({ stats, recentTurns }: { stats: Stats; r
             </div>
 
             {/* Overview stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
                 <StatCard label="Total Players" value={String(stats.total_players)} />
                 <StatCard label="Active Players" value={String(stats.active_players)} />
                 <StatCard label="Total Revenue" value={fmt(stats.cumulative_revenue)} highlight />
                 <StatCard label="Total Tax Paid" value={fmt(stats.total_tax_paid)} highlight />
+                <StatCard label="Outstanding Tax" value={fmt(stats.outstanding_tax)} />
+                <StatCard label="Indirect Supply Tax" value={fmt(stats.indirect_tax)} />
             </div>
 
             {/* Tax breakdown */}

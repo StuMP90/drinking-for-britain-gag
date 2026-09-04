@@ -24,6 +24,9 @@ class DashboardController extends Controller
 
         $totalTaxPaid = $taxTotals->sum();
 
+        $outstandingTax    = \App\Models\Liability::whereNull('paid_at')->sum('amount');
+        $indirectTax       = \App\Models\Setting::number('global_indirect_tax', 0);
+
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
                 'total_players'     => $totalPlayers,
@@ -31,6 +34,8 @@ class DashboardController extends Controller
                 'cumulative_revenue'=> round($cumulativeRevenue, 2),
                 'cumulative_profit' => round($cumulativeProfit, 2),
                 'total_tax_paid'    => round($totalTaxPaid, 2),
+                'outstanding_tax'   => round($outstandingTax, 2),
+                'indirect_tax'      => round($indirectTax, 2),
                 'tax_breakdown'     => $taxTotals,
             ],
             'recentTurns' => Turn::with('user:id,name,username')
