@@ -55,6 +55,7 @@ Route::middleware(['auth', 'not-paused', 'throttle:web'])->group(function () {
     Route::delete('/breweries/{brewery}', [BreweryController::class, 'destroy'])->name('breweries.destroy');
     Route::post('/breweries/{brewery}/sell', [BreweryController::class, 'sell'])->name('breweries.sell');
     Route::post('/breweries/{brewery}/brew', [BreweryController::class, 'queueBrew'])->name('breweries.brew');
+    Route::post('/breweries/{brewery}/transfer', [BreweryController::class, 'queueTransfer'])->name('breweries.transfer');
 
     Route::get('/market', [MarketController::class, 'index'])->name('market.index');
     Route::post('/market/product', [MarketController::class, 'buyProduct'])->name('market.buy-product');

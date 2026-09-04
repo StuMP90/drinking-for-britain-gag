@@ -31,6 +31,22 @@ class BreweryController extends Controller
                 ];
             });
 
+        $pendingTransfers = TurnAction::pending()
+            ->where('user_id', $user->id)
+            ->where('type', 'transfer')
+            ->get()
+            ->map(function ($action) {
+                $stock = \App\Models\Stock::find($action->payload['brewery_stock_id'] ?? 0);
+                $pub = \App\Models\Pub::find($action->payload['pub_id'] ?? null);
+                return [
+                    'id' => $action->id,
+                    'brewery_id' => $action->payload['brewery_id'] ?? null,
+                    'product_name' => $stock ? ($stock->marketListing->name ?? 'Unknown') : 'Unknown',
+                    'quantity_litres' => $action->payload['quantity_litres'] ?? 0,
+                    'pub_name' => $pub ? $pub->name : 'Unknown Pub',
+                ];
+            });
+
         return Inertia::render('Brewery/Index', [
             'breweries'      => $user->breweries()->with('staff', 'ingredients.marketListing', 'stocks.marketListing')->get(),
             'pubs'           => $user->pubs()->get(['id', 'name']),
@@ -38,6 +54,7 @@ class BreweryController extends Controller
             'balance'        => $user->balance,
             'buildCostTiers' => Setting::json('brewery_build_cost_tiers'),
             'pendingBrews'   => $pendingBrews,
+            'pendingTransfers'=> $pendingTransfers,
         ]);
     }
 
@@ -177,6 +194,49 @@ class BreweryController extends Controller
         ]);
 
         return back()->with('success', 'Brew queued for next turn.');
+    }
+
+    /** Queue a stock transfer action */
+    public function queueTransfer(Request $request, Brewery $brewery)
+    {
+        $this->authorize('update', $brewery);
+
+        $request->validate([
+            'brewery_stock_id' => 'required|exists:stocks,id',
+            'quantity_litres'  => 'required|numeric|min:1',
+            'pub_id'           => 'required|exists:pubs,id',
+        ]);
+
+        $stock = $brewery->stocks()->findOrFail($request->brewery_stock_id);
+
+        $pendingTransfers = TurnAction::pending()
+            ->where('user_id', auth()->id())
+            ->where('type', 'transfer')
+            ->get();
+            
+        $currentlyQueued = $pendingTransfers->filter(function($action) use ($stock) {
+            return ($action->payload['brewery_stock_id'] ?? null) == $stock->id;
+        })->sum(function($action) {
+            return (float) ($action->payload['quantity_litres'] ?? 0);
+        });
+
+        if ($currentlyQueued + $request->quantity_litres > $stock->quantity_litres) {
+            $remaining = max(0, $stock->quantity_litres - $currentlyQueued);
+            return back()->with('error', "Cannot queue transfer of {$request->quantity_litres}L. You only have {$remaining}L available to transfer.");
+        }
+
+        TurnAction::create([
+            'user_id' => auth()->id(),
+            'type'    => 'transfer',
+            'payload' => [
+                'brewery_id'       => $brewery->id,
+                'brewery_stock_id' => $stock->id,
+                'quantity_litres'  => $request->quantity_litres,
+                'pub_id'           => $request->pub_id,
+            ],
+        ]);
+
+        return back()->with('success', 'Transfer queued for next turn.');
     }
 
     private function calculateBuildCost(float $capacity): float

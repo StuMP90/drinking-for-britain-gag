@@ -27,6 +27,7 @@ interface Props {
     balance: number;
     buildCostTiers: CostTier[];
     pendingBrews: PendingBrew[];
+    pendingTransfers: PendingBrew[];
 }
 
 const fmt = (n: number, decimals: number = 2) => '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -40,7 +41,7 @@ function buildCost(capacity: number, tiers: CostTier[]): number {
     return capacity * 4;
 }
 
-export default function BreweryIndex({ breweries, pubs, products, balance, buildCostTiers, pendingBrews }: Props) {
+export default function BreweryIndex({ breweries, pubs, products, balance, buildCostTiers, pendingBrews, pendingTransfers }: Props) {
     const [showBuild, setShowBuild] = useState(false);
     const [expanded, setExpanded] = useState<number | null>(breweries.length === 1 ? breweries[0].id : null);
 
@@ -52,6 +53,7 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
 
     const buildForm = useForm({ name: '', capacity_litres: 1000 });
     const brewForm = useForm({ market_listing_id: '', quantity_litres: 100, pub_id: '' });
+    const transferForm = useForm({ brewery_stock_id: '', quantity_litres: 100, pub_id: '' });
     const staffForm = useForm({ staffable_type: 'brewery', staffable_id: 0, name: '', role: 'Brewer', weekly_wage: 800 });
 
     const cost = buildCost(Number(buildForm.data.capacity_litres), buildCostTiers);
@@ -189,6 +191,96 @@ export default function BreweryIndex({ breweries, pubs, products, balance, build
                                                 </div>
                                             ))}
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* Produced Stock */}
+                                {brewery.stocks.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-stone-300 mb-2">Produced Stock</h4>
+                                        <div className="space-y-4">
+                                            {brewery.stocks.map(stock => (
+                                                <div key={stock.id} className="flex flex-col gap-2 p-3 rounded bg-stone-800/20 border border-stone-800/50">
+                                                    <div className="flex gap-4 text-sm items-center">
+                                                        <span className="text-stone-300 w-36 shrink-0">{stock.market_listing.name}</span>
+                                                        <span className="text-amber-500 font-medium">{Number(stock.quantity_litres).toLocaleString()} L</span>
+                                                    </div>
+                                                    
+                                                    {/* Transfer Form */}
+                                                    <form 
+                                                        onSubmit={e => {
+                                                            e.preventDefault();
+                                                            transferForm.post(route('breweries.transfer', brewery.id), { preserveScroll: true });
+                                                        }}
+                                                        className="flex flex-wrap gap-2 items-end mt-1"
+                                                    >
+                                                        <div>
+                                                            <label className="text-xs text-stone-500 block mb-1">Transfer (Litres)</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max={Number(stock.quantity_litres)}
+                                                                className="w-24 px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-100 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                                value={transferForm.data.brewery_stock_id === String(stock.id) ? transferForm.data.quantity_litres : 100}
+                                                                onChange={e => {
+                                                                    transferForm.setData('brewery_stock_id', String(stock.id));
+                                                                    transferForm.setData('quantity_litres', parseInt(e.target.value));
+                                                                }}
+                                                                onFocus={() => {
+                                                                    if (transferForm.data.brewery_stock_id !== String(stock.id)) {
+                                                                        transferForm.setData('brewery_stock_id', String(stock.id));
+                                                                        transferForm.setData('quantity_litres', 100);
+                                                                    }
+                                                                }}
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-stone-500 block mb-1">To Pub</label>
+                                                            <select
+                                                                className="px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 text-stone-100 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                                value={transferForm.data.brewery_stock_id === String(stock.id) ? transferForm.data.pub_id : ''}
+                                                                onChange={e => {
+                                                                    transferForm.setData('brewery_stock_id', String(stock.id));
+                                                                    transferForm.setData('pub_id', e.target.value);
+                                                                }}
+                                                                onFocus={() => {
+                                                                    if (transferForm.data.brewery_stock_id !== String(stock.id)) {
+                                                                        transferForm.setData('brewery_stock_id', String(stock.id));
+                                                                    }
+                                                                }}
+                                                                required
+                                                            >
+                                                                <option value="">— Select pub —</option>
+                                                                {pubs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <button
+                                                            type="submit"
+                                                            disabled={transferForm.processing || transferForm.data.brewery_stock_id !== String(stock.id)}
+                                                            className="px-4 py-1.5 rounded-lg bg-stone-700 hover:bg-stone-600 disabled:opacity-50 text-stone-200 font-semibold text-sm transition-colors"
+                                                        >
+                                                            Queue Transfer
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {pendingTransfers.filter(t => t.brewery_id === brewery.id).length > 0 && (
+                                            <div className="mt-4 pt-3 border-t border-stone-800/50">
+                                                <h5 className="text-xs font-semibold text-stone-400 mb-2 uppercase tracking-wider">Already Queued For Next Turn</h5>
+                                                <div className="space-y-1.5">
+                                                    {pendingTransfers.filter(t => t.brewery_id === brewery.id).map(transfer => (
+                                                        <div key={transfer.id} className="flex gap-4 text-sm bg-stone-800/20 px-3 py-1.5 rounded border border-stone-800/50 items-center">
+                                                            <span className="text-stone-300 w-36 shrink-0">{transfer.product_name}</span>
+                                                            <span className="text-amber-500 font-medium shrink-0">{transfer.quantity_litres.toLocaleString()}L</span>
+                                                            <span className="text-stone-500 text-xs">→ {transfer.pub_name}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
