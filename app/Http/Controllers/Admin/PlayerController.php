@@ -13,8 +13,7 @@ class PlayerController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Players/Index', [
-            'players' => User::where('is_admin', false)
-                ->withCount(['pubs', 'breweries', 'turns'])
+            'players' => User::withCount(['pubs', 'breweries', 'turns'])
                 ->orderByDesc('created_at')
                 ->get(),
         ]);
@@ -54,6 +53,10 @@ class PlayerController extends Controller
 
     public function togglePause(User $player)
     {
+        if ($player->is_admin) {
+            return back()->with('error', 'Cannot pause admin accounts.');
+        }
+
         $player->update(['is_paused' => ! $player->is_paused]);
         $status = $player->is_paused ? 'paused' : 'resumed';
 

@@ -7,6 +7,7 @@ interface Player {
     username: string;
     balance: number;
     is_paused: boolean;
+    is_admin: boolean;
     pubs_count: number;
     breweries_count: number;
     turns_count: number;
@@ -124,26 +125,30 @@ function PlayerRow({ player }: { player: Player }) {
                 </span>
             </td>
             <td className="px-6 py-3 text-center">
-                <div className="flex items-center justify-center gap-2">
-                    <button
-                        onClick={() => pauseForm.post(route('admin.players.toggle-pause', player.id))}
-                        disabled={pauseForm.processing}
-                        className="px-3 py-1 rounded text-xs bg-stone-700 hover:bg-stone-600 text-stone-200 transition-colors"
-                    >
-                        {player.is_paused ? 'Resume' : 'Pause'}
-                    </button>
-                    <button
-                        onClick={() => {
-                            if (confirm(`Delete player ${player.username}? This cannot be undone.`)) {
-                                deleteForm.delete(route('admin.players.destroy', player.id));
-                            }
-                        }}
-                        disabled={deleteForm.processing}
-                        className="px-3 py-1 rounded text-xs bg-red-900/40 hover:bg-red-800/60 text-red-400 transition-colors"
-                    >
-                        Delete
-                    </button>
-                </div>
+                {!player.is_admin ? (
+                    <div className="flex items-center justify-center gap-2">
+                        <button
+                            onClick={() => pauseForm.post(route('admin.players.toggle-pause', player.id))}
+                            disabled={pauseForm.processing}
+                            className="px-3 py-1 rounded text-xs bg-stone-700 hover:bg-stone-600 text-stone-200 transition-colors"
+                        >
+                            {player.is_paused ? 'Resume' : 'Pause'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (confirm(`Delete player ${player.username}? This cannot be undone.`)) {
+                                    deleteForm.delete(route('admin.players.destroy', player.id));
+                                }
+                            }}
+                            disabled={deleteForm.processing}
+                            className="px-3 py-1 rounded text-xs bg-red-900/40 hover:bg-red-800/60 text-red-400 transition-colors"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                ) : (
+                    <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Admin</span>
+                )}
             </td>
         </tr>
     );
