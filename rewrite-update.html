@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drinking for Britain: System Rewrite Comparison</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f9fafb;
+        }
+        h1, h2 {
+            color: #111827;
+        }
+        h1 {
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .difference {
+            display: flex;
+            margin-bottom: 2rem;
+            border-left: 4px solid #3b82f6;
+            background-color: #eff6ff;
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+        }
+        .difference h3 {
+            margin-top: 0;
+            color: #1d4ed8;
+        }
+        .col {
+            flex: 1;
+            padding: 0 1rem;
+        }
+        .col:first-child {
+            border-right: 1px solid #bfdbfe;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            background-color: #2563eb;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        ul {
+            padding-left: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>System Rewrite Update</h1>
+    <p>This document highlights the major architectural, security, and operational changes between the original GitHub system and the newly developed rewrite (the current repository).</p>
+
+    <div class="container">
+        
+        <div class="difference">
+            <div class="col">
+                <h3>Original System</h3>
+                <span class="badge" style="background-color: #6b7280;">Legacy</span>
+                <p><strong>Authentication:</strong> Standard Laravel Breeze implementation focusing on passwords.</p>
+                <p><strong>Account Recovery:</strong> Manual password resets by email or admin intervention without granular 2FA controls.</p>
+            </div>
+            <div class="col">
+                <h3>New Rewrite</h3>
+                <span class="badge">Modernized</span>
+                <p><strong>Authentication:</strong> Implements <strong>True 2FA via WebAuthn</strong> using <code>laravel/passkeys</code>, supporting biometric and hardware security keys for maximum security.</p>
+                <p><strong>Account Recovery:</strong> Granular admin controls added to <code>Admin\PlayerController</code> to specifically revoke 2FA passkeys if a user loses their device.</p>
+            </div>
+        </div>
+
+        <div class="difference">
+            <div class="col">
+                <h3>Original System</h3>
+                <span class="badge" style="background-color: #6b7280;">Legacy</span>
+                <p><strong>Stock Transfers:</strong> Handled by a dedicated, separate <code>StockTransferController</code> which routed physical inventory transfers between business units.</p>
+            </div>
+            <div class="col">
+                <h3>New Rewrite</h3>
+                <span class="badge">Modernized</span>
+                <p><strong>Stock Transfers:</strong> Centralized directly into the <code>BreweryController</code> via a new <code>queueTransfer</code> method. This aligns transfers conceptually with the brewery that produces the stock, streamlining the backend architecture and reducing controller bloat.</p>
+            </div>
+        </div>
+
+        <div class="difference">
+            <div class="col">
+                <h3>Original System</h3>
+                <span class="badge" style="background-color: #6b7280;">Legacy</span>
+                <p><strong>Brewery UI:</strong> Standard CRUD table views that separated brewing logic from post-production logic.</p>
+            </div>
+            <div class="col">
+                <h3>New Rewrite</h3>
+                <span class="badge">Modernized</span>
+                <p><strong>Brewery UI:</strong> Completely overhauled unified React/Inertia interface (<code>Brewery/Index.tsx</code>). It now features inline forms for both queuing brews and queuing transfers, along with real-time tracking of "Produced Stock" and "Already Queued" pending actions.</p>
+            </div>
+        </div>
+
+        <div class="difference">
+            <div class="col">
+                <h3>Original System</h3>
+                <span class="badge" style="background-color: #6b7280;">Legacy</span>
+                <p><strong>Financial Tracking:</strong> Tax deductions and operational costs were often calculated and deducted directly from cash balances upon turn progression.</p>
+            </div>
+            <div class="col">
+                <h3>New Rewrite</h3>
+                <span class="badge">Modernized</span>
+                <p><strong>Financial Tracking:</strong> Introduces a dedicated <code>Liability</code> model. Taxes and operational costs are accrued as liabilities during the turn, providing a more accurate accounting model of delayed cash outflows and deferred tax payments.</p>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
